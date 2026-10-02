@@ -183,12 +183,12 @@
         <div>
           <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-3">1. GURU BERTUGAS</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="inputGuruBertugasContainer">
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">1.</span><input type="text" id="gb_1" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">4.</span><input type="text" id="gb_4" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">2.</span><input type="text" id="gb_2" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">5.</span><input type="text" id="gb_5" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">3.</span><input type="text" id="gb_3" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">6.</span><input type="text" id="gb_6" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">1.</span><input type="text" id="gb_1" list="listGuruAutocomplete" oninput="updatePreparerDropdown()" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">4.</span><input type="text" id="gb_4" list="listGuruAutocomplete" oninput="updatePreparerDropdown()" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">2.</span><input type="text" id="gb_2" list="listGuruAutocomplete" oninput="updatePreparerDropdown()" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">5.</span><input type="text" id="gb_5" list="listGuruAutocomplete" oninput="updatePreparerDropdown()" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">3.</span><input type="text" id="gb_3" list="listGuruAutocomplete" oninput="updatePreparerDropdown()" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">6.</span><input type="text" id="gb_6" list="listGuruAutocomplete" oninput="updatePreparerDropdown()" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
           </div>
         </div>
 
@@ -220,7 +220,7 @@
           </div>
         </div>
 
-        <!-- 3. GURU TIDAK HADIR (DENGAN DROPDOWN NAMA GURU & SEBAB) -->
+        <!-- 3. GURU TIDAK HADIR -->
         <div>
           <div class="flex items-center justify-between mb-3">
             <div>
@@ -413,6 +413,8 @@
 
         <!-- TANDATANGAN CANVAS SCRIBBLE -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+          
+          <!-- TANDATANGAN GURU BERTUGAS (DROPDOWN TERHAD GURU BERTUGAS) -->
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div class="flex justify-between items-center mb-2">
               <label class="text-xs font-bold text-slate-700">TANDATANGAN GURU BERTUGAS (DISEDIAKAN OLEH):</label>
@@ -421,9 +423,17 @@
               </button>
             </div>
             <canvas id="canvasGuru" width="380" height="130" class="signature-pad w-full"></canvas>
-            <input type="text" id="namaGuruTandatangan" list="listGuruAutocomplete" placeholder="Nama Guru Bertugas Menyedia" class="w-full mt-2 px-3 py-1.5 border rounded-lg text-xs bg-white">
+            
+            <!-- DROPDOWN NAMA GURU PENYEDIA LAPORAN -->
+            <div class="mt-2">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Guru Penyedia (Pilih Guru Bertugas):</label>
+              <select id="namaGuruTandatangan" class="w-full px-3 py-2 border rounded-lg text-xs font-bold text-slate-800 bg-white">
+                <option value="">-- Pilih Guru Penyedia Laporan --</option>
+              </select>
+            </div>
           </div>
 
+          <!-- TANDATANGAN PENTADBIR -->
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div class="flex justify-between items-center mb-2">
               <label class="text-xs font-bold text-slate-700">TANDATANGAN PENTADBIR (DISEMAK OLEH):</label>
@@ -432,7 +442,10 @@
               </button>
             </div>
             <canvas id="canvasPentadbir" width="380" height="130" class="signature-pad w-full"></canvas>
-            <input type="text" id="namaPentadbirTandatangan" list="listGuruAutocomplete" placeholder="Nama Pengetua / Guru Penolong Kanan" class="w-full mt-2 px-3 py-1.5 border rounded-lg text-xs bg-white">
+            <div class="mt-2">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Pengetua / Penolong Kanan:</label>
+              <input type="text" id="namaPentadbirTandatangan" list="listGuruAutocomplete" placeholder="Nama Pengetua / Guru Penolong Kanan" class="w-full px-3 py-2 border rounded-lg text-xs bg-white font-medium">
+            </div>
           </div>
         </div>
 
@@ -791,7 +804,6 @@
         </div>
 
         <div id="adminTeacherListContainer" class="max-h-60 overflow-y-auto space-y-1.5 border rounded-xl p-2 bg-slate-50">
-          <!-- Item guru -->
         </div>
 
         <div class="flex justify-end gap-2 pt-3 border-t">
@@ -809,7 +821,6 @@
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYvyphCIscCZR9p2on3ukNTyITiRj4DLLJp3sAFc72nKcpAXQRWU23RzR2Rs72Q7krZA/exec";
 
-    // 26 Senarai Guru Asal Berdasarkan Dokumen
     let currentTeachersList = [
       "ABD HADI B ADMAN",
       "JESSICA CHAN LAI PENG",
@@ -938,9 +949,38 @@
       if (pageId === "dashboard") renderDashboardTable();
     }
 
-    // ==========================================
-    //  PENGISIAN KEHADIRAN & AUTO-CALCULATE
-    // ==========================================
+    // ========================================================
+    //  DROPDOWN PENYEDIA LAPORAN (TERHAD KEPADA GURU BERTUGAS)
+    // ========================================================
+    function updatePreparerDropdown(preferredSelection = "") {
+      const select = document.getElementById("namaGuruTandatangan");
+      if (!select) return;
+
+      const currentVal = preferredSelection || select.value;
+      select.innerHTML = '<option value="">-- Pilih Guru Penyedia Laporan --</option>';
+
+      const dutyTeachers = [];
+      for (let i = 1; i <= 6; i++) {
+        const val = document.getElementById(`gb_${i}`)?.value.trim();
+        if (val && !dutyTeachers.includes(val)) {
+          dutyTeachers.push(val);
+        }
+      }
+
+      dutyTeachers.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        if (name === currentVal) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      // Jika tiada yang dipilih secara khusus, auto-pilih guru pertama / ketua
+      if (!select.value && dutyTeachers.length > 0) {
+        select.value = dutyTeachers[0];
+      }
+    }
+
     function updateTeacherDatalist() {
       const dl = document.getElementById("listGuruAutocomplete");
       dl.innerHTML = "";
@@ -968,14 +1008,12 @@
       const count = tbody.children.length + 1;
       const tr = document.createElement("tr");
 
-      // Bina Pilihan Dropdown Guru
       let teacherOptions = `<option value="">-- Pilih Nama Guru --</option>`;
       currentTeachersList.forEach(t => {
         const isSel = (t === selectedTeacher) ? "selected" : "";
         teacherOptions += `<option value="${t}" ${isSel}>${t}</option>`;
       });
 
-      // Bina Pilihan Dropdown Sebab
       let reasonOptions = `<option value="">-- Pilih Sebab --</option>`;
       REASONS_LIST.forEach(r => {
         const isSel = (r === selectedReason) ? "selected" : "";
@@ -1047,9 +1085,6 @@
       if (existingReportFoundForDate) loadReportForPrint(existingReportFoundForDate.ID);
     }
 
-    // ==========================================
-    //  JADUAL GURU BERTUGAS 2026
-    // ==========================================
     function initJadualDropdown() {
       const select = document.getElementById("selectMingguJadual");
       select.innerHTML = "";
@@ -1086,6 +1121,9 @@
       for (let i = 1; i <= 6; i++) {
         document.getElementById(`gb_${i}`).value = item.guru[i - 1] || "";
       }
+
+      // Kemas kini pilihan dropdown guru penyedia laporan
+      updatePreparerDropdown();
     }
 
     function matchScheduleByDate(dateStr) {
@@ -1155,9 +1193,6 @@
       tbody.appendChild(tr);
     }
 
-    // ==========================================
-    //  MAMPATAN GAMBAR AUTO
-    // ==========================================
     async function handleImageSelection(e) {
       const files = Array.from(e.target.files);
       if (!files.length) return;
@@ -1246,9 +1281,6 @@
       showToast("Gambar dipadam.", "info");
     }
 
-    // ==========================================
-    //  TANDATANGAN CANVAS
-    // ==========================================
     const pads = {};
 
     function initSignaturePads() {
@@ -1321,9 +1353,6 @@
       img.onload = () => pad.ctx.drawImage(img, 0, 0);
     }
 
-    // ==========================================
-    //  HANTAR & SIMPAN BORANG
-    // ==========================================
     async function handleFormSubmit(e) {
       e.preventDefault();
       const submitBtn = document.getElementById("btnSubmitForm");
@@ -1464,6 +1493,8 @@
       for (let i = 0; i < 2; i++) addAbsentTeacherRow();
       calculateAttendanceAutomatically();
 
+      updatePreparerDropdown();
+
       history.pushState(null, "", "?page=pelaporan");
       showToast("Borang diset semula untuk laporan baharu.", "info");
     }
@@ -1584,6 +1615,9 @@
           document.getElementById(`gb_${i}`).value = gb[i - 1] || "";
         }
 
+        // Kemaskini dropdown pilihan guru penyedia dan set nilai yang disimpan
+        updatePreparerDropdown(data.Nama_Pengisi || gb[0] || "");
+
         document.getElementById("ucapanPengetua").value = data.Ucapan_Pengetua || "";
         document.getElementById("ucapanPK").value = data.Ucapan_PK || "";
         document.getElementById("ucapanGuruBertugas").value = data.Ucapan_GuruBertugas || "";
@@ -1646,7 +1680,6 @@
         setSignatureFromBase64("canvasGuru", data.TT_Guru);
         setSignatureFromBase64("canvasPentadbir", data.TT_Pentadbir);
 
-        document.getElementById("namaGuruTandatangan").value = data.Nama_Pengisi || gb[0] || "";
         document.getElementById("namaPentadbirTandatangan").value = data.Nama_Pentadbir || data.GKMP || "";
 
         showToast("Laporan sedia dikemaskini.", "success");
@@ -1809,6 +1842,7 @@
           imgPentadbir.classList.add("hidden");
         }
 
+        // Paparkan nama pengisi daripada rekod jika ada, jika tiada ambil guru pertama
         document.getElementById("p_namaGuruText").textContent = d.Nama_Pengisi || gb[0] || "Guru Bertugas";
         document.getElementById("p_namaPentadbirText").textContent = d.Nama_Pentadbir || d.GKMP || "Pengetua / GPK";
 
@@ -1846,9 +1880,6 @@
       setTimeout(() => t.classList.add("hidden"), 3500);
     }
 
-    // ==========================================
-    //  MODAL PENGURUSAN GURU OLEH ADMIN
-    // ==========================================
     function openAdminModal() {
       document.getElementById("adminModal").classList.remove("hidden");
       if (!authenticatedAdminPassword) {
