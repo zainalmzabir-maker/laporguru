@@ -35,7 +35,6 @@
   <nav class="no-print bg-emerald-700 text-white shadow-md sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('pelaporan')">
-        <!-- Paparan Logo pada Navbar -->
         <img src="logo.png" alt="Logo Sekolah" class="h-10 w-10 object-contain rounded-md bg-white/10 p-0.5 shadow-sm" onerror="this.style.display='none'">
         <div>
           <h1 class="font-bold text-lg leading-tight">e-Laporan Guru Bertugas</h1>
@@ -80,16 +79,14 @@
           <div class="flex items-center gap-2">
             <label class="text-xs font-medium text-emerald-200">Pilih Jadual Minggu:</label>
             <select id="selectMingguJadual" onchange="onWeekSelectionChanged()" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-2 border-0 shadow">
-              <!-- Dijana dinamik dari data jadual -->
+              <!-- Dijana secara dinamik -->
             </select>
           </div>
         </div>
 
         <div>
           <h3 class="text-xs font-bold uppercase text-emerald-200 tracking-wider mb-2">Senarai Guru Bertugas Semasa:</h3>
-          <div id="rosterList" class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-            <!-- Senarai Guru -->
-          </div>
+          <div id="rosterList" class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm"></div>
         </div>
       </div>
 
@@ -336,19 +333,42 @@
           <textarea id="laporanHarian" rows="3" placeholder="Ulasan keseluruhan perjalanan aktiviti sekolah hari ini..." class="w-full p-3 border rounded-lg text-sm"></textarea>
         </div>
 
-        <!-- FOTO SIGNIFIKAN -->
+        <!-- ======================================================== -->
+        <!--  FOTO SIGNIFIKAN: DUAL INPUT (KAMERA & FAIL) + KOMPRESI  -->
+        <!-- ======================================================== -->
         <div class="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-200">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
             <div>
               <h3 class="text-sm font-bold text-emerald-950 flex items-center gap-2">
-                <i class="fa-solid fa-camera text-emerald-600"></i> FOTO SIGNIFIKAN (MAKSIMUM 4 GAMBAR)
+                <i class="fa-solid fa-camera text-emerald-600 text-base"></i> FOTO SIGNIFIKAN (MAKSIMUM 4 GAMBAR)
               </h3>
-              <p class="text-xs text-emerald-700 mt-0.5">Imej dimampatkan secara automatik sebelum disimpan supaya pangkalan data Sheet kekal pantas & ringan.</p>
+              <p class="text-xs text-emerald-700 mt-0.5">
+                Gambar dimampatkan secara automatik ke resolusi ringan (~15-25 KB) supaya pangkalan data Sheet pantas dan lancar.
+              </p>
             </div>
-            <input type="file" id="fotoUploadInput" accept="image/*" multiple onchange="handleImageSelection(event)" class="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+            
+            <!-- Butang Pilihan Kamera vs Galeri/Fail -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Hidden Inputs -->
+              <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelection(event)">
+              <input type="file" id="fileInput" accept="image/*" multiple class="hidden" onchange="handleImageSelection(event)">
+
+              <button type="button" onclick="document.getElementById('cameraInput').click()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-2 transition active:scale-95">
+                <i class="fa-solid fa-camera"></i> Ambil Foto (Kamera)
+              </button>
+              <button type="button" onclick="document.getElementById('fileInput').click()" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-2 transition active:scale-95">
+                <i class="fa-solid fa-images"></i> Pilih Fail / Galeri
+              </button>
+            </div>
           </div>
 
-          <div id="fotoPreviewContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3"></div>
+          <!-- Indikator Jumlah Gambar -->
+          <div class="flex items-center justify-between text-xs font-semibold text-slate-500 mb-2">
+            <span id="photoCountText">0 daripada 4 gambar dimuat naik</span>
+            <span class="text-[11px] text-emerald-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>Auto Compress Aktif</span>
+          </div>
+
+          <div id="fotoPreviewContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
         </div>
 
         <!-- TANDATANGAN CANVAS SCRIBBLE -->
@@ -496,7 +516,6 @@
             <h2 class="text-base font-black uppercase tracking-wider">LAPORAN GURU BERTUGAS</h2>
             <div class="text-[10px] font-bold tracking-widest uppercase text-gray-700">Buku Rekod & Pengurusan Harian Sekolah</div>
           </div>
-          <!-- Elemen pengimbang susun atur bagi memastikan tajuk kekal di tengah -->
           <div class="w-14 flex-shrink-0 hidden md:block"></div>
         </div>
 
@@ -911,24 +930,34 @@
       tbody.appendChild(tr);
     }
 
+    // ========================================================
+    //      LOGIK PEMAMPATAN & PEMILIHAN GAMBAR
+    // ========================================================
     async function handleImageSelection(e) {
       const files = Array.from(e.target.files);
-      if (files.length + compressedPhotos.length > 4) {
+      if (!files.length) return;
+
+      if (compressedPhotos.length + files.length > 4) {
         showToast("Maksimum 4 keping foto sahaja dibenarkan!", "error");
+        e.target.value = "";
         return;
       }
 
+      showToast("Sedang memproses & memampatkan imej...", "info");
+
       for (const file of files) {
         if (compressedPhotos.length >= 4) break;
-        const compressedBase64 = await compressImageFile(file, 500, 0.5);
+        // Mampatkan dengan maks dimensi 600px dan kualiti 0.55 (~15KB - 25KB)
+        const compressedBase64 = await compressImageFile(file, 600, 0.55);
         compressedPhotos.push(compressedBase64);
       }
 
       renderPhotoPreviews();
       e.target.value = "";
+      showToast("Imej berjaya dimampatkan dan sedia dimuat naik!", "success");
     }
 
-    function compressImageFile(file, maxDimension = 500, quality = 0.5) {
+    function compressImageFile(file, maxDimension = 600, quality = 0.55) {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -939,12 +968,16 @@
             let width = img.width;
             let height = img.height;
 
-            if (width > height && width > maxDimension) {
-              height = Math.round((height * maxDimension) / width);
-              width = maxDimension;
-            } else if (height > maxDimension) {
-              width = Math.round((width * maxDimension) / height);
-              height = maxDimension;
+            if (width > height) {
+              if (width > maxDimension) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              }
+            } else {
+              if (height > maxDimension) {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
             }
 
             const canvas = document.createElement("canvas");
@@ -953,6 +986,7 @@
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
 
+            // Eksport ke JPEG berkualiti optimum
             resolve(canvas.toDataURL("image/jpeg", quality));
           };
         };
@@ -961,13 +995,23 @@
 
     function renderPhotoPreviews() {
       const container = document.getElementById("fotoPreviewContainer");
+      const countText = document.getElementById("photoCountText");
       container.innerHTML = "";
+
+      countText.textContent = `${compressedPhotos.length} daripada 4 gambar dimuat naik`;
+
       compressedPhotos.forEach((src, idx) => {
+        // Kira anggaran saiz fail KB
+        const sizeInKb = Math.round((src.length * 3 / 4) / 1024);
+
         const div = document.createElement("div");
-        div.className = "relative rounded-lg overflow-hidden border border-slate-300 shadow-sm bg-black/5 aspect-video";
+        div.className = "relative rounded-xl overflow-hidden border border-slate-300 shadow-sm bg-slate-900 group aspect-video";
         div.innerHTML = `
           <img src="${src}" class="w-full h-full object-cover">
-          <button type="button" onclick="removePhoto(${idx})" class="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-rose-700">
+          <div class="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold">
+            ${sizeInKb} KB
+          </div>
+          <button type="button" onclick="removePhoto(${idx})" class="absolute top-1.5 right-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md transition" title="Padam Gambar">
             <i class="fa-solid fa-xmark"></i>
           </button>
         `;
@@ -978,8 +1022,12 @@
     function removePhoto(idx) {
       compressedPhotos.splice(idx, 1);
       renderPhotoPreviews();
+      showToast("Gambar dipadam.", "info");
     }
 
+    // ========================================================
+    //               TANDATANGAN DIGITAL CANVAS
+    // ========================================================
     const pads = {};
 
     function initSignaturePads() {
@@ -1052,6 +1100,9 @@
       img.onload = () => pad.ctx.drawImage(img, 0, 0);
     }
 
+    // ========================================================
+    //               HANTAR & KEMASKINI BORANG
+    // ========================================================
     async function handleFormSubmit(e) {
       e.preventDefault();
       const submitBtn = document.getElementById("btnSubmitForm");
@@ -1154,7 +1205,7 @@
         }
       } catch (err) {
         console.error(err);
-        showToast("Ralat rangkaian dengan Google Sheet.", "error");
+        showToast("Ralat sambungan dengan Google Sheet.", "error");
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span id="submitBtnText">${currentEditReportId ? 'Kemaskini Laporan' : 'Simpan Laporan'}</span>`;
