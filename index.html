@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>e-Laporan Guru Bertugas Harian</title>
+
+  <!-- ================= FAVICON LOGO ================= -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -26,11 +31,12 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
 
-  <!-- ================= NAVIGASI ATAS (NO PRINT) ================= -->
+  <!-- ================= NAVIGASI ATAS DENGAN LOGO ================= -->
   <nav class="no-print bg-emerald-700 text-white shadow-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('pelaporan')">
-        <i class="fa-solid fa-clipboard-check text-2xl text-emerald-200"></i>
+        <!-- Paparan Logo pada Navbar -->
+        <img src="logo.png" alt="Logo Sekolah" class="h-10 w-10 object-contain rounded-md bg-white/10 p-0.5 shadow-sm" onerror="this.style.display='none'">
         <div>
           <h1 class="font-bold text-lg leading-tight">e-Laporan Guru Bertugas</h1>
           <p class="text-xs text-emerald-200">Sistem Laporan Bertugas Harian Bersepadu</p>
@@ -61,7 +67,7 @@
     <!-- ======================================================== -->
     <div id="page-pelaporan" class="space-y-6">
       
-      <!-- KAD JADUAL SEMASA (DI ATAS SEKALI SEPERTI ARAHAN) -->
+      <!-- KAD JADUAL SEMASA (DI ATAS SEKALI) -->
       <div class="bg-gradient-to-r from-emerald-800 to-teal-700 text-white p-5 rounded-2xl shadow-lg">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-600 pb-4 mb-4">
           <div>
@@ -74,7 +80,7 @@
           <div class="flex items-center gap-2">
             <label class="text-xs font-medium text-emerald-200">Pilih Jadual Minggu:</label>
             <select id="selectMingguJadual" onchange="onWeekSelectionChanged()" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-2 border-0 shadow">
-              <!-- Dijana dinamik dari PDF 2026 -->
+              <!-- Dijana dinamik dari data jadual -->
             </select>
           </div>
         </div>
@@ -82,7 +88,7 @@
         <div>
           <h3 class="text-xs font-bold uppercase text-emerald-200 tracking-wider mb-2">Senarai Guru Bertugas Semasa:</h3>
           <div id="rosterList" class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-            <!-- Senarai Guru Terpapar di Sini -->
+            <!-- Senarai Guru -->
           </div>
         </div>
       </div>
@@ -104,7 +110,7 @@
         </div>
       </div>
 
-      <!-- BORANG LAPORAN (BERTUGAS 1 & BERTUGAS 2) -->
+      <!-- BORANG LAPORAN -->
       <form id="reportForm" onsubmit="handleFormSubmit(event)" class="bg-white rounded-2xl shadow-md p-6 space-y-8 border border-slate-200">
         
         <!-- HEADER BORANG -->
@@ -330,7 +336,7 @@
           <textarea id="laporanHarian" rows="3" placeholder="Ulasan keseluruhan perjalanan aktiviti sekolah hari ini..." class="w-full p-3 border rounded-lg text-sm"></textarea>
         </div>
 
-        <!-- FOTO SIGNIFIKAN (MAKSIMUM 4 & DIMAMPATKAN SECARA AUTO) -->
+        <!-- FOTO SIGNIFIKAN -->
         <div class="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-200">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
             <div>
@@ -464,7 +470,7 @@
         <div class="flex items-center gap-2">
           <span class="text-xs font-bold text-slate-600">Pilih Laporan:</span>
           <select id="printReportSelect" onchange="loadReportForPrint(this.value)" class="text-xs border rounded-lg px-3 py-1.5 font-semibold text-slate-800">
-            <!-- Pilihan laporan dijana secara automatik -->
+            <!-- Pilihan laporan dijana secara dinamik -->
           </select>
         </div>
         <div class="flex items-center gap-2">
@@ -480,11 +486,18 @@
         </div>
       </div>
 
-      <!-- TEMPLATE CETAKAN RASMI 1:1 MENGIKUT BERTUGAS 1 & 2 -->
+      <!-- ================= TEMPLATE CETAKAN RASMI 1:1 ================= -->
       <div id="printableDocument" class="print-container bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-slate-200 text-black leading-tight text-xs">
         
-        <div class="border-2 border-black p-2 mb-4 text-center">
-          <h2 class="text-base font-black uppercase tracking-wider">LAPORAN GURU BERTUGAS</h2>
+        <!-- HEADER CETAKAN DENGAN LOGO SEKOLAH -->
+        <div class="border-2 border-black p-3 mb-4 flex items-center justify-between gap-3">
+          <img src="logo.png" alt="Logo Sekolah" class="h-14 w-14 object-contain flex-shrink-0" onerror="this.style.display='none'">
+          <div class="text-center flex-grow">
+            <h2 class="text-base font-black uppercase tracking-wider">LAPORAN GURU BERTUGAS</h2>
+            <div class="text-[10px] font-bold tracking-widest uppercase text-gray-700">Buku Rekod & Pengurusan Harian Sekolah</div>
+          </div>
+          <!-- Elemen pengimbang susun atur bagi memastikan tajuk kekal di tengah -->
+          <div class="w-14 flex-shrink-0 hidden md:block"></div>
         </div>
 
         <div class="border-2 border-black p-2 mb-4 grid grid-cols-4 gap-2 font-bold text-[11px]">
@@ -691,10 +704,8 @@
   <!--               SKRIP JAVASCRIPT APLIKASI                  -->
   <!-- ======================================================== -->
   <script>
-    // 1. URL RASMI GOOGLE APPS SCRIPT
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYvyphCIscCZR9p2on3ukNTyITiRj4DLLJp3sAFc72nKcpAXQRWU23RzR2Rs72Q7krZA/exec";
 
-    // 2. TAKWIM JADUAL GURU BERTUGAS 2026
     const JADUAL_2026 = [
       { minggu: "MINGGU 23", tarikhStr: "06.07.2026 hingga 10.07.2026", startDate: "2026-07-06", endDate: "2026-07-10", guru: ["Cikgu Tanty binti Ramli (K)", "Cikgu Muhammad Syadza bin Yusof", "Cikgu Siti Nur Hakimah binti Mohd Noor"], gkmp: "Cikgu Mohd Riduwan bin Mohd Yasan (GKMP Sains dan Matematik)" },
       { minggu: "MINGGU 24", tarikhStr: "13.07.2026 hingga 17.07.2026", startDate: "2026-07-13", endDate: "2026-07-17", guru: ["Cikgu Muhammad Amirul Aiman bin Zakaria (K)", "Cikgu Norihan binti Yusof", "Cikgu Norul Hafidzah binti Hassan"], gkmp: "Cikgu Mohd Nizam bin Subani (GKMP Teknik Vokasional)" },
@@ -733,7 +744,6 @@
     let currentEditReportId = null;
     let compressedPhotos = [];
 
-    // 3. INISIALISASI
     window.addEventListener("DOMContentLoaded", () => {
       initJadualDropdown();
       initMonitoringTable();
@@ -784,7 +794,6 @@
       if (pageId === "dashboard") renderDashboardTable();
     }
 
-    // 4. JADUAL BERTUGAS LOGIK
     function initJadualDropdown() {
       const select = document.getElementById("selectMingguJadual");
       select.innerHTML = "";
@@ -839,7 +848,6 @@
       matchScheduleByDate(dateStr);
     }
 
-    // 5. INPUT JADUAL DINAMIK
     function initMonitoringTable() {
       const tbody = document.getElementById("tbodyMonitoring");
       tbody.innerHTML = "";
@@ -903,7 +911,6 @@
       tbody.appendChild(tr);
     }
 
-    // 6. MAMPATAN GAMBAR AUTO (MAKSIMUM 4 GAMBAR)
     async function handleImageSelection(e) {
       const files = Array.from(e.target.files);
       if (files.length + compressedPhotos.length > 4) {
@@ -913,7 +920,6 @@
 
       for (const file of files) {
         if (compressedPhotos.length >= 4) break;
-        // Resolusi maksimum 500px, kualiti 0.5 (~15KB)
         const compressedBase64 = await compressImageFile(file, 500, 0.5);
         compressedPhotos.push(compressedBase64);
       }
@@ -974,7 +980,6 @@
       renderPhotoPreviews();
     }
 
-    // 7. TANDATANGAN DIGITAL CANVAS
     const pads = {};
 
     function initSignaturePads() {
@@ -1047,7 +1052,6 @@
       img.onload = () => pad.ctx.drawImage(img, 0, 0);
     }
 
-    // 8. PENGHANTARAN & KEMASKINI
     async function handleFormSubmit(e) {
       e.preventDefault();
       const submitBtn = document.getElementById("btnSubmitForm");
@@ -1182,7 +1186,6 @@
       showToast("Borang diset semula untuk laporan baharu.", "info");
     }
 
-    // 9. DAPATKAN REKOD SHEET (DASHBOARD & CETAKAN)
     async function fetchReportsFromSheet() {
       try {
         const res = await fetch(`${APPS_SCRIPT_URL}?action=getAll`);
@@ -1266,7 +1269,6 @@
       });
     }
 
-    // 10. EDIT & CETAK DARI ID
     async function loadReportForEdit(id) {
       showToast("Memuat laporan...", "info");
       try {
