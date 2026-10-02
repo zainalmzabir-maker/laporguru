@@ -66,7 +66,44 @@
     <!-- ======================================================== -->
     <div id="page-pelaporan" class="space-y-6">
       
-      <!-- KAD JADUAL SEMASA (DI ATAS SEKALI) -->
+      <!-- ======================================================== -->
+      <!--    PERINGATAN ATAS SEKALI: LAPORAN TELAH DIISI PADA TARIKH -->
+      <!-- ======================================================== -->
+      <div id="alreadyFilledAlert" class="hidden bg-amber-500/10 border-2 border-amber-500 p-4 rounded-2xl shadow-md transition-all">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="p-2.5 bg-amber-500 text-white rounded-xl flex-shrink-0 mt-0.5 sm:mt-0 shadow-sm">
+              <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="bg-amber-100 text-amber-900 text-[11px] font-black uppercase px-2.5 py-0.5 rounded-full border border-amber-300">
+                  Laporan Telah Diisi Bagi Tarikh Ini
+                </span>
+                <span id="alertReportId" class="text-xs font-mono font-bold text-slate-700"></span>
+              </div>
+              <p class="text-sm font-bold text-slate-800 mt-1">
+                Laporan untuk tarikh <span id="alertDateText" class="text-amber-800 underline font-black"></span> telah diisi oleh:
+              </p>
+              <p class="text-xs text-slate-600 mt-0.5">
+                <i class="fa-solid fa-user-pen mr-1 text-amber-600"></i> Nama Pengisi: <b id="alertSubmitterText" class="text-slate-900 font-bold"></b> 
+                <span class="mx-1 text-slate-300">|</span> 
+                <i class="fa-regular fa-clock mr-1 text-amber-600"></i> Masa Diisi / Kemaskini: <span id="alertTimeText" class="font-medium"></span>
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-amber-200">
+            <button type="button" onclick="editExistingReportFromAlert()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow transition active:scale-95 flex items-center gap-1.5">
+              <i class="fa-solid fa-pen-to-square"></i> Kemaskini Laporan Ini
+            </button>
+            <button type="button" onclick="printExistingReportFromAlert()" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5">
+              <i class="fa-solid fa-print"></i> Cetakan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KAD JADUAL SEMASA (DILETAKKAN DI ATAS BORANG) -->
       <div class="bg-gradient-to-r from-emerald-800 to-teal-700 text-white p-5 rounded-2xl shadow-lg">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-600 pb-4 mb-4">
           <div>
@@ -93,7 +130,7 @@
       <!-- STATUS BAR MOD KEMASKINI & URL LAPORAN -->
       <div id="updateStatusBar" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm">
         <div>
-          <span class="bg-amber-200 text-amber-900 text-xs px-2.5 py-1 rounded font-bold uppercase"><i class="fa-solid fa-arrows-rotate mr-1"></i> Mod Kemaskini</span>
+          <span class="bg-amber-200 text-amber-900 text-xs px-2.5 py-1 rounded font-bold uppercase"><i class="fa-solid fa-arrows-rotate mr-1"></i> Sedang Mengemaskini</span>
           <span id="activeReportIdDisplay" class="font-mono text-sm font-bold text-slate-800 ml-2"></span>
           <p id="lastUpdatedDisplay" class="text-xs text-slate-600 mt-1"></p>
         </div>
@@ -124,7 +161,7 @@
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-600 uppercase">Tarikh</label>
-              <input type="date" id="formTarikh" required class="w-full mt-1 px-3 py-2 bg-white border rounded-lg text-sm font-medium text-slate-800" onchange="autoFillDay(this.value)">
+              <input type="date" id="formTarikh" required class="w-full mt-1 px-3 py-2 bg-white border rounded-lg text-sm font-medium text-slate-800" onchange="onDateInputChanged(this.value)">
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-600 uppercase">Hari</label>
@@ -333,9 +370,7 @@
           <textarea id="laporanHarian" rows="3" placeholder="Ulasan keseluruhan perjalanan aktiviti sekolah hari ini..." class="w-full p-3 border rounded-lg text-sm"></textarea>
         </div>
 
-        <!-- ======================================================== -->
-        <!--  FOTO SIGNIFIKAN: DUAL INPUT (KAMERA & FAIL) + KOMPRESI  -->
-        <!-- ======================================================== -->
+        <!-- FOTO SIGNIFIKAN: DUAL INPUT (KAMERA & GALERI) -->
         <div class="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-200">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
             <div>
@@ -343,13 +378,11 @@
                 <i class="fa-solid fa-camera text-emerald-600 text-base"></i> FOTO SIGNIFIKAN (MAKSIMUM 4 GAMBAR)
               </h3>
               <p class="text-xs text-emerald-700 mt-0.5">
-                Gambar dimampatkan secara automatik ke resolusi ringan (~15-25 KB) supaya pangkalan data Sheet pantas dan lancar.
+                Gambar dimampatkan secara automatik (~15-25 KB) supaya database Sheet kekal ringan & laju.
               </p>
             </div>
             
-            <!-- Butang Pilihan Kamera vs Galeri/Fail -->
             <div class="flex items-center gap-2 flex-wrap">
-              <!-- Hidden Inputs -->
               <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelection(event)">
               <input type="file" id="fileInput" accept="image/*" multiple class="hidden" onchange="handleImageSelection(event)">
 
@@ -362,7 +395,6 @@
             </div>
           </div>
 
-          <!-- Indikator Jumlah Gambar -->
           <div class="flex items-center justify-between text-xs font-semibold text-slate-500 mb-2">
             <span id="photoCountText">0 daripada 4 gambar dimuat naik</span>
             <span class="text-[11px] text-emerald-700 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>Auto Compress Aktif</span>
@@ -415,7 +447,6 @@
     <!-- ======================================================== -->
     <div id="page-dashboard" class="hidden space-y-6">
       
-      <!-- STATISTIK RINGKAS -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <p class="text-xs font-semibold text-slate-500 uppercase">Jumlah Laporan</p>
@@ -439,7 +470,6 @@
         </div>
       </div>
 
-      <!-- CARIAN & TINDAKAN PANTAS -->
       <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
         <div class="relative w-full md:w-80">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
@@ -455,7 +485,6 @@
         </div>
       </div>
 
-      <!-- SENARAI REKOD JADUAL -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-4 border-b font-bold text-slate-800 flex justify-between items-center">
           <span>Senarai Rekod Laporan Guru Bertugas</span>
@@ -467,7 +496,7 @@
               <tr>
                 <th class="p-3">ID / Tarikh</th>
                 <th class="p-3">Minggu</th>
-                <th class="p-3">Guru Bertugas</th>
+                <th class="p-3">Pengisi / Guru Bertugas</th>
                 <th class="p-3 text-center">Status</th>
                 <th class="p-3">Terakhir Dikemaskini</th>
                 <th class="p-3 text-center">Tindakan</th>
@@ -485,12 +514,10 @@
     <!-- ======================================================== -->
     <div id="page-cetakan" class="hidden space-y-6">
       
-      <!-- KAWALAN CETAK (NO PRINT) -->
       <div class="no-print bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-3">
         <div class="flex items-center gap-2">
           <span class="text-xs font-bold text-slate-600">Pilih Laporan:</span>
           <select id="printReportSelect" onchange="loadReportForPrint(this.value)" class="text-xs border rounded-lg px-3 py-1.5 font-semibold text-slate-800">
-            <!-- Pilihan laporan dijana secara dinamik -->
           </select>
         </div>
         <div class="flex items-center gap-2">
@@ -506,10 +533,8 @@
         </div>
       </div>
 
-      <!-- ================= TEMPLATE CETAKAN RASMI 1:1 ================= -->
       <div id="printableDocument" class="print-container bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-slate-200 text-black leading-tight text-xs">
         
-        <!-- HEADER CETAKAN DENGAN LOGO SEKOLAH -->
         <div class="border-2 border-black p-3 mb-4 flex items-center justify-between gap-3">
           <img src="logo.png" alt="Logo Sekolah" class="h-14 w-14 object-contain flex-shrink-0" onerror="this.style.display='none'">
           <div class="text-center flex-grow">
@@ -761,6 +786,7 @@
 
     let allReports = [];
     let currentEditReportId = null;
+    let existingReportFoundForDate = null;
     let compressedPhotos = [];
 
     window.addEventListener("DOMContentLoaded", () => {
@@ -775,17 +801,19 @@
 
       navigate(page, false);
 
-      if (id) {
-        if (page === "pelaporan") loadReportForEdit(id);
-        else if (page === "cetakan") loadReportForPrint(id);
-      }
-
       const today = new Date().toISOString().split("T")[0];
       document.getElementById("formTarikh").value = today;
       autoFillDay(today);
       matchScheduleByDate(today);
 
-      fetchReportsFromSheet();
+      fetchReportsFromSheet().then(() => {
+        if (id) {
+          if (page === "pelaporan") loadReportForEdit(id);
+          else if (page === "cetakan") loadReportForPrint(id);
+        } else {
+          checkIfReportExistsForDate(today);
+        }
+      });
     });
 
     function navigate(pageId, pushState = true) {
@@ -813,6 +841,64 @@
       if (pageId === "dashboard") renderDashboardTable();
     }
 
+    // ========================================================
+    //  SEMAKAN LAPORAN TELAH DIISI PADA TARIKH TERPILIH
+    // ========================================================
+    function onDateInputChanged(selectedDate) {
+      autoFillDay(selectedDate);
+      checkIfReportExistsForDate(selectedDate);
+    }
+
+    function checkIfReportExistsForDate(dateStr) {
+      const alertBox = document.getElementById("alreadyFilledAlert");
+      if (!dateStr || allReports.length === 0) {
+        alertBox.classList.add("hidden");
+        existingReportFoundForDate = null;
+        return;
+      }
+
+      // Cari rekod mengikut tarikh (yyyy-mm-dd)
+      const found = allReports.find(r => String(r.Tarikh).trim() === String(dateStr).trim());
+
+      // Jika ada laporan DAN pengguna belum lagi berada dalam mod edit laporan tersebut
+      if (found && currentEditReportId !== found.ID) {
+        existingReportFoundForDate = found;
+        
+        // Dapatkan nama pengisi
+        let submitterName = found.Nama_Pengisi;
+        if (!submitterName) {
+          let gList = [];
+          try { gList = JSON.parse(found.Guru_Bertugas_JSON); } catch(e){}
+          submitterName = gList.find(g => g.includes("(K)")) || gList[0] || "Guru Bertugas";
+        }
+
+        document.getElementById("alertReportId").textContent = `ID: ${found.ID}`;
+        document.getElementById("alertDateText").textContent = `${found.Tarikh} (${found.Hari || ''})`;
+        document.getElementById("alertSubmitterText").textContent = submitterName;
+        document.getElementById("alertTimeText").textContent = found.Tarikh_Kemaskini || found.Tarikh_Dicipta || "-";
+        
+        alertBox.classList.remove("hidden");
+      } else {
+        alertBox.classList.add("hidden");
+        existingReportFoundForDate = null;
+      }
+    }
+
+    function editExistingReportFromAlert() {
+      if (existingReportFoundForDate) {
+        loadReportForEdit(existingReportFoundForDate.ID);
+      }
+    }
+
+    function printExistingReportFromAlert() {
+      if (existingReportFoundForDate) {
+        loadReportForPrint(existingReportFoundForDate.ID);
+      }
+    }
+
+    // ========================================================
+    //  JADUAL BERTUGAS DARI PDF
+    // ========================================================
     function initJadualDropdown() {
       const select = document.getElementById("selectMingguJadual");
       select.innerHTML = "";
@@ -931,7 +1017,7 @@
     }
 
     // ========================================================
-    //      LOGIK PEMAMPATAN & PEMILIHAN GAMBAR
+    //  KOMPRESI GAMBAR AUTOMATIK (KAMERA & GALERI)
     // ========================================================
     async function handleImageSelection(e) {
       const files = Array.from(e.target.files);
@@ -947,14 +1033,13 @@
 
       for (const file of files) {
         if (compressedPhotos.length >= 4) break;
-        // Mampatkan dengan maks dimensi 600px dan kualiti 0.55 (~15KB - 25KB)
         const compressedBase64 = await compressImageFile(file, 600, 0.55);
         compressedPhotos.push(compressedBase64);
       }
 
       renderPhotoPreviews();
       e.target.value = "";
-      showToast("Imej berjaya dimampatkan dan sedia dimuat naik!", "success");
+      showToast("Imej berjaya dimampatkan!", "success");
     }
 
     function compressImageFile(file, maxDimension = 600, quality = 0.55) {
@@ -986,7 +1071,6 @@
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Eksport ke JPEG berkualiti optimum
             resolve(canvas.toDataURL("image/jpeg", quality));
           };
         };
@@ -1001,7 +1085,6 @@
       countText.textContent = `${compressedPhotos.length} daripada 4 gambar dimuat naik`;
 
       compressedPhotos.forEach((src, idx) => {
-        // Kira anggaran saiz fail KB
         const sizeInKb = Math.round((src.length * 3 / 4) / 1024);
 
         const div = document.createElement("div");
@@ -1026,7 +1109,7 @@
     }
 
     // ========================================================
-    //               TANDATANGAN DIGITAL CANVAS
+    //  TANDATANGAN CANVAS
     // ========================================================
     const pads = {};
 
@@ -1101,7 +1184,7 @@
     }
 
     // ========================================================
-    //               HANTAR & KEMASKINI BORANG
+    //  HANTAR & SIMPAN BORANG
     // ========================================================
     async function handleFormSubmit(e) {
       e.preventDefault();
@@ -1174,7 +1257,9 @@
         Foto_3: compressedPhotos[2] || "",
         Foto_4: compressedPhotos[3] || "",
         TT_Guru: ttGuru,
-        TT_Pentadbir: ttPentadbir
+        TT_Pentadbir: ttPentadbir,
+        Nama_Pengisi: document.getElementById("namaGuruTandatangan").value.trim(),
+        Nama_Pentadbir: document.getElementById("namaPentadbirTandatangan").value.trim()
       };
 
       const isUpdate = !!currentEditReportId;
@@ -1197,6 +1282,9 @@
 
           const nowStr = result.masaKemaskini || new Date().toLocaleString("ms-MY");
           showUpdateBar(result.id, nowStr);
+
+          // Sembunyikan alert amaran kerana pengguna kini berada dalam mod kemaskini
+          document.getElementById("alreadyFilledAlert").classList.add("hidden");
 
           history.pushState(null, "", `?page=pelaporan&id=${result.id}`);
           await fetchReportsFromSheet();
@@ -1222,6 +1310,7 @@
 
     function resetFormToNew() {
       currentEditReportId = null;
+      existingReportFoundForDate = null;
       document.getElementById("reportForm").reset();
       document.getElementById("updateStatusBar").classList.add("hidden");
       document.getElementById("submitBtnText").textContent = "Simpan Laporan";
@@ -1233,6 +1322,8 @@
       const today = new Date().toISOString().split("T")[0];
       document.getElementById("formTarikh").value = today;
       autoFillDay(today);
+      checkIfReportExistsForDate(today);
+
       history.pushState(null, "", "?page=pelaporan");
       showToast("Borang diset semula untuk laporan baharu.", "info");
     }
@@ -1268,7 +1359,7 @@
       tbody.innerHTML = "";
 
       const filtered = allReports.filter(r => {
-        const str = `${r.ID} ${r.Minggu} ${r.Tarikh} ${r.Guru_Bertugas_JSON}`.toLowerCase();
+        const str = `${r.ID} ${r.Minggu} ${r.Tarikh} ${r.Nama_Pengisi || ''} ${r.Guru_Bertugas_JSON}`.toLowerCase();
         return str.includes(search);
       });
 
@@ -1282,7 +1373,7 @@
       filtered.forEach(r => {
         let guruList = [];
         try { guruList = JSON.parse(r.Guru_Bertugas_JSON); } catch(e){}
-        const ketua = guruList.find(g => g.includes("(K)")) || guruList[0] || "-";
+        const submitter = r.Nama_Pengisi || guruList.find(g => g.includes("(K)")) || guruList[0] || "-";
 
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-50 transition";
@@ -1293,7 +1384,7 @@
           </td>
           <td class="p-3 font-semibold text-slate-700">${r.Minggu}</td>
           <td class="p-3">
-            <span class="inline-block px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded font-medium">${ketua}</span>
+            <span class="inline-block px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded font-medium">${submitter}</span>
             <div class="text-[10px] text-slate-400 mt-0.5">${guruList.length} Orang Guru</div>
           </td>
           <td class="p-3 text-center">
@@ -1329,6 +1420,9 @@
         const data = json.data;
 
         currentEditReportId = data.ID;
+        existingReportFoundForDate = null;
+        document.getElementById("alreadyFilledAlert").classList.add("hidden");
+
         navigate("pelaporan", false);
         history.pushState(null, "", `?page=pelaporan&id=${data.ID}`);
 
@@ -1406,6 +1500,9 @@
 
         setSignatureFromBase64("canvasGuru", data.TT_Guru);
         setSignatureFromBase64("canvasPentadbir", data.TT_Pentadbir);
+
+        document.getElementById("namaGuruTandatangan").value = data.Nama_Pengisi || gb[0] || "";
+        document.getElementById("namaPentadbirTandatangan").value = data.Nama_Pentadbir || data.GKMP || "";
 
         showToast("Laporan sedia dikemaskini.", "success");
       } catch (err) {
@@ -1567,8 +1664,8 @@
           imgPentadbir.classList.add("hidden");
         }
 
-        document.getElementById("p_namaGuruText").textContent = gb[0] || "Guru Bertugas";
-        document.getElementById("p_namaPentadbirText").textContent = d.GKMP || "Pengetua / GPK";
+        document.getElementById("p_namaGuruText").textContent = d.Nama_Pengisi || gb[0] || "Guru Bertugas";
+        document.getElementById("p_namaPentadbirText").textContent = d.Nama_Pentadbir || d.GKMP || "Pengetua / GPK";
 
       } catch (err) {
         showToast("Ralat memaparkan cetakan: " + err.message, "error");
