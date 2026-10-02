@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>e-Laporan Guru Bertugas Harian</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @media print {
+      body { background: white !important; font-size: 11pt; color: black !important; }
+      .no-print { display: none !important; }
+      .print-container { width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; }
+      .page-break { page-break-before: always; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid #000 !important; padding: 4px 6px !important; }
+    }
+    .signature-pad {
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      cursor: crosshair;
+      touch-action: none;
+      background-color: #f8fafc;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+  <!-- ================= NAVIGASI ATAS (NO PRINT) ================= -->
+  <nav class="no-print bg-emerald-700 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('pelaporan')">
+        <i class="fa-solid fa-clipboard-check text-2xl text-emerald-200"></i>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">e-Laporan Guru Bertugas</h1>
+          <p class="text-xs text-emerald-200">Sistem Laporan Bertugas Harian Bersepadu</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button onclick="navigate('pelaporan')" id="nav-pelaporan" class="px-4 py-2 rounded-lg text-sm font-medium transition bg-emerald-800 text-white shadow">
+          <i class="fa-solid fa-pen-to-square mr-1"></i> Pelaporan
+        </button>
+        <button onclick="navigate('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-lg text-sm font-medium transition hover:bg-emerald-600">
+          <i class="fa-solid fa-chart-pie mr-1"></i> Dashboard
+        </button>
+        <button onclick="navigate('cetakan')" id="nav-cetakan" class="px-4 py-2 rounded-lg text-sm font-medium transition hover:bg-emerald-600">
+          <i class="fa-solid fa-print mr-1"></i> Cetakan
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ================= NOTIFIKASI / TOAST ================= -->
+  <div id="toast" class="no-print fixed bottom-5 right-5 z-50 hidden px-5 py-3 rounded-xl shadow-2xl text-white font-medium flex items-center gap-3 transition"></div>
+
+  <!-- ================= KANDUNGAN UTAMA ================= -->
+  <div class="max-w-6xl mx-auto p-4 md:p-6">
+
+    <!-- ======================================================== -->
+    <!--                   PAGE 1: PELAPORAN                      -->
+    <!-- ======================================================== -->
+    <div id="page-pelaporan" class="space-y-6">
+      
+      <!-- KAD JADUAL SEMASA (DI ATAS SEKALI SEPERTI ARAHAN) -->
+      <div class="bg-gradient-to-r from-emerald-800 to-teal-700 text-white p-5 rounded-2xl shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-600 pb-4 mb-4">
+          <div>
+            <span class="inline-block px-3 py-1 bg-emerald-600/60 border border-emerald-400/40 rounded-full text-xs font-semibold uppercase tracking-wider text-emerald-100">
+              Jadual Guru Bertugas Rasmi 2026
+            </span>
+            <h2 id="currentWeekDisplay" class="text-2xl font-black mt-1">Minggu --</h2>
+            <p id="currentGkmpDisplay" class="text-emerald-200 text-sm mt-0.5"><i class="fa-solid fa-user-tie mr-1"></i> GKMP: --</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-medium text-emerald-200">Pilih Jadual Minggu:</label>
+            <select id="selectMingguJadual" onchange="onWeekSelectionChanged()" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-2 border-0 shadow">
+              <!-- Dijana dinamik dari PDF 2026 -->
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-xs font-bold uppercase text-emerald-200 tracking-wider mb-2">Senarai Guru Bertugas Semasa:</h3>
+          <div id="rosterList" class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+            <!-- Senarai Guru Terpapar di Sini -->
+          </div>
+        </div>
+      </div>
+
+      <!-- STATUS BAR MOD KEMASKINI & URL LAPORAN -->
+      <div id="updateStatusBar" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm">
+        <div>
+          <span class="bg-amber-200 text-amber-900 text-xs px-2.5 py-1 rounded font-bold uppercase"><i class="fa-solid fa-arrows-rotate mr-1"></i> Mod Kemaskini</span>
+          <span id="activeReportIdDisplay" class="font-mono text-sm font-bold text-slate-800 ml-2"></span>
+          <p id="lastUpdatedDisplay" class="text-xs text-slate-600 mt-1"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="copyCurrentUrl()" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-100 shadow-sm">
+            <i class="fa-solid fa-link mr-1"></i> Salin URL Laporan Ini
+          </button>
+          <button type="button" onclick="resetFormToNew()" class="px-3 py-1.5 bg-slate-700 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 shadow-sm">
+            <i class="fa-solid fa-plus mr-1"></i> Cipta Laporan Baharu
+          </button>
+        </div>
+      </div>
+
+      <!-- BORANG LAPORAN (BERTUGAS 1 & BERTUGAS 2) -->
+      <form id="reportForm" onsubmit="handleFormSubmit(event)" class="bg-white rounded-2xl shadow-md p-6 space-y-8 border border-slate-200">
+        
+        <!-- HEADER BORANG -->
+        <div class="border-b pb-4">
+          <div class="text-center mb-6">
+            <h2 class="text-xl md:text-2xl font-black text-slate-800 tracking-wide uppercase">LAPORAN GURU BERTUGAS HARIAN</h2>
+            <p class="text-xs text-slate-500">Pematuhan Piawaian Buku Pengurusan Sekolah</p>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase">Minggu</label>
+              <input type="text" id="formMinggu" required class="w-full mt-1 px-3 py-2 bg-white border rounded-lg text-sm font-bold text-slate-800">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase">Tarikh</label>
+              <input type="date" id="formTarikh" required class="w-full mt-1 px-3 py-2 bg-white border rounded-lg text-sm font-medium text-slate-800" onchange="autoFillDay(this.value)">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase">Hari</label>
+              <input type="text" id="formHari" required class="w-full mt-1 px-3 py-2 bg-white border rounded-lg text-sm font-medium text-slate-800">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase">Kehadiran Guru</label>
+              <input type="text" id="formKehadiranGuru" placeholder="Cth: 46 / 48" class="w-full mt-1 px-3 py-2 bg-white border rounded-lg text-sm font-medium text-slate-800">
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. GURU BERTUGAS -->
+        <div>
+          <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-3">1. GURU BERTUGAS</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="inputGuruBertugasContainer">
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">1.</span><input type="text" id="gb_1" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">4.</span><input type="text" id="gb_4" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">2.</span><input type="text" id="gb_2" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">5.</span><input type="text" id="gb_5" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">3.</span><input type="text" id="gb_3" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">6.</span><input type="text" id="gb_6" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+          </div>
+        </div>
+
+        <!-- 2. PERHIMPUNAN / AKTIVITI PAGI -->
+        <div>
+          <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-3">2. PERHIMPUNAN / AKTIVITI PAGI</h3>
+          <p class="text-xs text-slate-500 mb-2 italic">Guru Yang Berucap dan Perkara / Isi Utama Ucapan / Pengumuman:</p>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700">UCAPAN PENGETUA</label>
+              <textarea id="ucapanPengetua" rows="2" class="w-full mt-1 p-2.5 border rounded-lg text-sm"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700">UCAPAN PENOLONG KANAN</label>
+              <textarea id="ucapanPK" rows="2" class="w-full mt-1 p-2.5 border rounded-lg text-sm"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700">UCAPAN GURU BERTUGAS</label>
+              <textarea id="ucapanGuruBertugas" rows="2" class="w-full mt-1 p-2.5 border rounded-lg text-sm"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700">LAIN-LAIN UCAPAN</label>
+              <textarea id="lainUcapan" rows="2" class="w-full mt-1 p-2.5 border rounded-lg text-sm"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 text-emerald-800">KOMEN MENGENAI PERJALANAN PERHIMPUNAN</label>
+              <textarea id="komenPerhimpunan" rows="2" class="w-full mt-1 p-2.5 border rounded-lg text-sm bg-emerald-50/40"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. GURU TIDAK HADIR -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg">3. GURU TIDAK HADIR</h3>
+            <button type="button" onclick="addAbsentTeacherRow()" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md hover:bg-emerald-200">
+              <i class="fa-solid fa-plus mr-1"></i> Tambah Baris
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border border-slate-200 rounded-lg">
+              <thead class="bg-slate-100 uppercase font-bold text-slate-700">
+                <tr>
+                  <th class="p-2 w-12 text-center">BIL</th>
+                  <th class="p-2">NAMA GURU</th>
+                  <th class="p-2">SEBAB</th>
+                  <th class="p-2 w-10 text-center">PADAM</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAbsentTeachers"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 4. PEMANTAUAN KEBERSIHAN & KECERIAAN -->
+        <div>
+          <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-1">4. PEMANTAUAN (SILA TANDA √ DI KOTAK YANG DISEDIAKAN)</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Skala: 1. Tidak memuaskan | 2. Kurang memuaskan | 3. Baik | 4. Sangat baik</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs border border-slate-200 rounded-lg text-center">
+              <thead class="bg-slate-100 uppercase font-bold text-slate-700">
+                <tr>
+                  <th class="p-2 text-left">BIDANG KEBERSIHAN / KECERIAAN</th>
+                  <th class="p-2 w-12">1</th>
+                  <th class="p-2 w-12">2</th>
+                  <th class="p-2 w-12">3</th>
+                  <th class="p-2 w-12">4</th>
+                  <th class="p-2 text-left">CATATAN</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200" id="tbodyMonitoring"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 5 & 6. HEM, DISIPLIN & KESELAMATAN -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+            <h3 class="text-sm font-bold bg-slate-700 text-white px-3 py-1.5 rounded-lg">5. HAL EHWAL MURID / DISIPLIN</h3>
+            <div>
+              <label class="block text-xs font-bold text-slate-600">A. Bilangan Murid Hadir Lewat:</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="number" id="muridLewat" min="0" value="0" class="w-24 px-3 py-1.5 border rounded-lg text-sm bg-white">
+                <span class="text-xs font-semibold text-slate-500">Orang Murid</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600">B. Bilangan Murid ke Hospital / Klinik / Pulang Awal:</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="number" id="muridKlinik" min="0" value="0" class="w-24 px-3 py-1.5 border rounded-lg text-sm bg-white">
+                <span class="text-xs font-semibold text-slate-500">Orang Murid</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600">C. Tahap Disiplin Murid Keseluruhan:</label>
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapDisiplin" value="Cemerlang" class="mr-2 text-emerald-600"> Cemerlang
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapDisiplin" value="Baik" checked class="mr-2 text-emerald-600"> Baik
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapDisiplin" value="Memuaskan" class="mr-2 text-emerald-600"> Memuaskan
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapDisiplin" value="Lemah" class="mr-2 text-emerald-600"> Lemah
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+            <h3 class="text-sm font-bold bg-slate-700 text-white px-3 py-1.5 rounded-lg">6. TAHAP KESELAMATAN SEKOLAH</h3>
+            <div>
+              <label class="block text-xs font-bold text-slate-600">A. Tahap Keselamatan Keseluruhan:</label>
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapKeselamatan" value="Cemerlang" class="mr-2 text-emerald-600"> Cemerlang
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapKeselamatan" value="Baik" checked class="mr-2 text-emerald-600"> Baik
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapKeselamatan" value="Memuaskan" class="mr-2 text-emerald-600"> Memuaskan
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapKeselamatan" value="Lemah" class="mr-2 text-emerald-600"> Lemah
+                </label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600">B. Catatan Kemalangan / Isu Keselamatan:</label>
+              <textarea id="catatanKeselamatan" rows="3" placeholder="Sila nyatakan punca atau insiden jika ada..." class="w-full mt-1 p-2 border rounded-lg text-sm bg-white"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. PELAWAT -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg">7. PELAWAT (RUJUK BUKU PELAWAT)</h3>
+            <button type="button" onclick="addVisitorRow()" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md hover:bg-emerald-200">
+              <i class="fa-solid fa-plus mr-1"></i> Tambah Pelawat
+            </button>
+          </div>
+          <table class="w-full text-xs text-left border border-slate-200 rounded-lg">
+            <thead class="bg-slate-100 uppercase font-bold text-slate-700">
+              <tr>
+                <th class="p-2 w-12 text-center">BIL</th>
+                <th class="p-2">NAMA PELAWAT / PEGAWAI</th>
+                <th class="p-2">URUSAN</th>
+                <th class="p-2 w-10 text-center">PADAM</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyVisitors"></tbody>
+          </table>
+        </div>
+
+        <!-- 8. AKTIVITI / PROGRAM -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg">8. LAPORAN AKTIVITI / PROGRAM / LAWATAN</h3>
+            <button type="button" onclick="addActivityRow()" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md hover:bg-emerald-200">
+              <i class="fa-solid fa-plus mr-1"></i> Tambah Program
+            </button>
+          </div>
+          <table class="w-full text-xs text-left border border-slate-200 rounded-lg">
+            <thead class="bg-slate-100 uppercase font-bold text-slate-700">
+              <tr>
+                <th class="p-2 w-12 text-center">BIL</th>
+                <th class="p-2">AKTIVITI / PROGRAM / LAWATAN</th>
+                <th class="p-2">PENGLIBATAN</th>
+                <th class="p-2 w-10 text-center">PADAM</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyActivities"></tbody>
+          </table>
+        </div>
+
+        <!-- 9. LAPORAN HARIAN -->
+        <div>
+          <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-2">9. LAPORAN HARIAN</h3>
+          <textarea id="laporanHarian" rows="3" placeholder="Ulasan keseluruhan perjalanan aktiviti sekolah hari ini..." class="w-full p-3 border rounded-lg text-sm"></textarea>
+        </div>
+
+        <!-- FOTO SIGNIFIKAN (MAKSIMUM 4 & DIMAMPATKAN SECARA AUTO) -->
+        <div class="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-200">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-emerald-950 flex items-center gap-2">
+                <i class="fa-solid fa-camera text-emerald-600"></i> FOTO SIGNIFIKAN (MAKSIMUM 4 GAMBAR)
+              </h3>
+              <p class="text-xs text-emerald-700 mt-0.5">Imej dimampatkan secara automatik sebelum disimpan supaya pangkalan data Sheet kekal pantas & ringan.</p>
+            </div>
+            <input type="file" id="fotoUploadInput" accept="image/*" multiple onchange="handleImageSelection(event)" class="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+          </div>
+
+          <div id="fotoPreviewContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3"></div>
+        </div>
+
+        <!-- TANDATANGAN CANVAS SCRIBBLE -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-xs font-bold text-slate-700">TANDATANGAN GURU BERTUGAS (DISEDIAKAN OLEH):</label>
+              <button type="button" onclick="clearSignature('canvasGuru')" class="text-xs text-rose-600 hover:underline font-semibold">
+                <i class="fa-solid fa-eraser mr-1"></i> Padam
+              </button>
+            </div>
+            <canvas id="canvasGuru" width="380" height="130" class="signature-pad w-full"></canvas>
+            <input type="text" id="namaGuruTandatangan" placeholder="Nama Guru Bertugas Menyedia" class="w-full mt-2 px-3 py-1.5 border rounded-lg text-xs bg-white">
+          </div>
+
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-xs font-bold text-slate-700">TANDATANGAN PENTADBIR (DISEMAK OLEH):</label>
+              <button type="button" onclick="clearSignature('canvasPentadbir')" class="text-xs text-rose-600 hover:underline font-semibold">
+                <i class="fa-solid fa-eraser mr-1"></i> Padam
+              </button>
+            </div>
+            <canvas id="canvasPentadbir" width="380" height="130" class="signature-pad w-full"></canvas>
+            <input type="text" id="namaPentadbirTandatangan" placeholder="Nama Pengetua / Guru Penolong Kanan" class="w-full mt-2 px-3 py-1.5 border rounded-lg text-xs bg-white">
+          </div>
+        </div>
+
+        <!-- BUTANG TINDAKAN -->
+        <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-6 border-t">
+          <button type="button" onclick="resetFormToNew()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-bold hover:bg-slate-100">
+            Kosongkan Borang
+          </button>
+          <button type="submit" id="btnSubmitForm" class="w-full sm:w-auto px-8 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 shadow-lg flex items-center justify-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span id="submitBtnText">Simpan Laporan</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- ======================================================== -->
+    <!--                   PAGE 2: DASHBOARD                      -->
+    <!-- ======================================================== -->
+    <div id="page-dashboard" class="hidden space-y-6">
+      
+      <!-- STATISTIK RINGKAS -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500 uppercase">Jumlah Laporan</p>
+          <h3 id="statTotalReports" class="text-2xl font-black text-slate-800 mt-1">0</h3>
+          <span class="text-[11px] text-emerald-600 font-semibold"><i class="fa-solid fa-database mr-1"></i>Tersimpan di Sheet</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500 uppercase">Status Pengesahan</p>
+          <h3 id="statVerifiedCount" class="text-2xl font-black text-emerald-700 mt-1">0</h3>
+          <span class="text-[11px] text-slate-500 font-medium">Telah Disahkan</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500 uppercase">Purata Murid Lewat</p>
+          <h3 id="statAvgLate" class="text-2xl font-black text-amber-600 mt-1">0</h3>
+          <span class="text-[11px] text-slate-500 font-medium">Orang Setiap Hari</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500 uppercase">Status Sistem</p>
+          <h3 class="text-2xl font-black text-teal-700 mt-1">Aktif</h3>
+          <span class="text-[11px] text-emerald-600 font-medium">Google Sheet Terhubung</span>
+        </div>
+      </div>
+
+      <!-- CARIAN & TINDAKAN PANTAS -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
+        <div class="relative w-full md:w-80">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+          <input type="text" id="dashboardSearchInput" oninput="renderDashboardTable()" placeholder="Cari ID, tarikh, guru, atau minggu..." class="w-full pl-9 pr-3 py-2 border rounded-xl text-sm">
+        </div>
+        <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+          <button type="button" onclick="fetchReportsFromSheet()" class="px-4 py-2 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl hover:bg-emerald-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate"></i> Muat Semula Data
+          </button>
+          <button type="button" onclick="navigate('pelaporan')" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i> Tambah Laporan
+          </button>
+        </div>
+      </div>
+
+      <!-- SENARAI REKOD JADUAL -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b font-bold text-slate-800 flex justify-between items-center">
+          <span>Senarai Rekod Laporan Guru Bertugas</span>
+          <span id="recordCountBadge" class="text-xs bg-slate-100 px-2.5 py-1 rounded-full text-slate-600">0 Rekod</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-600 font-bold uppercase border-b">
+              <tr>
+                <th class="p-3">ID / Tarikh</th>
+                <th class="p-3">Minggu</th>
+                <th class="p-3">Guru Bertugas</th>
+                <th class="p-3 text-center">Status</th>
+                <th class="p-3">Terakhir Dikemaskini</th>
+                <th class="p-3 text-center">Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!--                   PAGE 3: CETAKAN                        -->
+    <!-- ======================================================== -->
+    <div id="page-cetakan" class="hidden space-y-6">
+      
+      <!-- KAWALAN CETAK (NO PRINT) -->
+      <div class="no-print bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-600">Pilih Laporan:</span>
+          <select id="printReportSelect" onchange="loadReportForPrint(this.value)" class="text-xs border rounded-lg px-3 py-1.5 font-semibold text-slate-800">
+            <!-- Pilihan laporan dijana secara automatik -->
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.print()" class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 shadow flex items-center gap-2">
+            <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
+          </button>
+          <button type="button" onclick="editLoadedPrintReport()" class="px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 shadow flex items-center gap-2">
+            <i class="fa-solid fa-pen"></i> Kemaskini Laporan Ini
+          </button>
+          <button type="button" onclick="copyPrintUrl()" class="px-3 py-2 border rounded-xl text-xs font-semibold hover:bg-slate-50 text-slate-700">
+            <i class="fa-solid fa-share-nodes"></i> Salin URL
+          </button>
+        </div>
+      </div>
+
+      <!-- TEMPLATE CETAKAN RASMI 1:1 MENGIKUT BERTUGAS 1 & 2 -->
+      <div id="printableDocument" class="print-container bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-slate-200 text-black leading-tight text-xs">
+        
+        <div class="border-2 border-black p-2 mb-4 text-center">
+          <h2 class="text-base font-black uppercase tracking-wider">LAPORAN GURU BERTUGAS</h2>
+        </div>
+
+        <div class="border-2 border-black p-2 mb-4 grid grid-cols-4 gap-2 font-bold text-[11px]">
+          <div>MINGGU : <span id="p_minggu" class="font-normal font-mono"></span></div>
+          <div>TARIKH : <span id="p_tarikh" class="font-normal"></span></div>
+          <div>HARI : <span id="p_hari" class="font-normal"></span></div>
+          <div>KEHADIRAN GURU : <span id="p_kehadiran" class="font-normal"></span></div>
+        </div>
+
+        <!-- 1. GURU BERTUGAS -->
+        <div class="mb-4">
+          <div class="font-bold mb-1">1. GURU BERTUGAS :</div>
+          <table class="w-full border-collapse border border-black text-[11px]">
+            <tr>
+              <td class="border border-black p-1 w-1/2">1. <span id="p_gb1"></span></td>
+              <td class="border border-black p-1 w-1/2">4. <span id="p_gb4"></span></td>
+            </tr>
+            <tr>
+              <td class="border border-black p-1">2. <span id="p_gb2"></span></td>
+              <td class="border border-black p-1">5. <span id="p_gb5"></span></td>
+            </tr>
+            <tr>
+              <td class="border border-black p-1">3. <span id="p_gb3"></span></td>
+              <td class="border border-black p-1">6. <span id="p_gb6"></span></td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- 2. PERHIMPUNAN / AKTIVITI PAGI -->
+        <div class="mb-4">
+          <div class="font-bold mb-1">2. PERHIMPUNAN / AKTIVITI PAGI:</div>
+          <div class="text-[10px] italic mb-1">Guru Yang Berucap dan Perkara / Isi Utama Ucapan / Pengumuman :</div>
+          <table class="w-full border-collapse border border-black text-[10px]">
+            <tr>
+              <td class="border border-black p-1.5 font-bold w-1/4 align-top">UCAPAN PENGETUA</td>
+              <td class="border border-black p-1.5 min-h-[35px] whitespace-pre-line" id="p_ucapanPengetua">-</td>
+            </tr>
+            <tr>
+              <td class="border border-black p-1.5 font-bold w-1/4 align-top">UCAPAN PENOLONG KANAN</td>
+              <td class="border border-black p-1.5 min-h-[35px] whitespace-pre-line" id="p_ucapanPK">-</td>
+            </tr>
+            <tr>
+              <td class="border border-black p-1.5 font-bold w-1/4 align-top">UCAPAN GURU BERTUGAS</td>
+              <td class="border border-black p-1.5 min-h-[35px] whitespace-pre-line" id="p_ucapanGB">-</td>
+            </tr>
+            <tr>
+              <td class="border border-black p-1.5 font-bold w-1/4 align-top">LAIN-LAIN UCAPAN</td>
+              <td class="border border-black p-1.5 min-h-[35px] whitespace-pre-line" id="p_lainUcapan">-</td>
+            </tr>
+          </table>
+          <div class="mt-2 text-[10px]">
+            <span class="font-bold">Komen Mengenai Perjalanan Perhimpunan :</span>
+            <div id="p_komenPerhimpunan" class="mt-1 p-1.5 border border-black min-h-[25px] whitespace-pre-line"></div>
+          </div>
+        </div>
+
+        <!-- 3. GURU TIDAK HADIR -->
+        <div class="mb-4">
+          <div class="font-bold mb-1">3. GURU TIDAK HADIR :</div>
+          <table class="w-full border-collapse border border-black text-[10px]">
+            <thead>
+              <tr class="bg-gray-100 font-bold">
+                <td class="border border-black p-1 text-center w-8">BIL</td>
+                <td class="border border-black p-1">NAMA</td>
+                <td class="border border-black p-1">SEBAB</td>
+                <td class="border border-black p-1 text-center w-8">BIL</td>
+                <td class="border border-black p-1">NAMA</td>
+                <td class="border border-black p-1">SEBAB</td>
+              </tr>
+            </thead>
+            <tbody id="p_tbodyAbsent"></tbody>
+          </table>
+        </div>
+
+        <!-- 4. PEMANTAUAN KEBERSIHAN -->
+        <div class="mb-4">
+          <div class="font-bold mb-1">4. PEMANTAUAN (SILA TANDA √ DI KOTAK YANG DISEDIAKAN) :</div>
+          <table class="w-full border-collapse border border-black text-[10px] text-center">
+            <thead>
+              <tr class="font-bold bg-gray-100">
+                <td class="border border-black p-1 text-left">BIDANG KEBERSIHAN / KECERIAAN</td>
+                <td class="border border-black p-1 w-10">1</td>
+                <td class="border border-black p-1 w-10">2</td>
+                <td class="border border-black p-1 w-10">3</td>
+                <td class="border border-black p-1 w-10">4</td>
+                <td class="border border-black p-1 text-left w-1/3">CATATAN</td>
+              </tr>
+            </thead>
+            <tbody id="p_tbodyMonitoring"></tbody>
+          </table>
+          <div class="text-[9px] mt-1 italic text-right">**1. Tidak memuaskan | 2. Kurang memuaskan | 3. Baik | 4. Sangat baik</div>
+        </div>
+
+        <div class="page-break my-6 border-t border-dashed border-gray-300 no-print"></div>
+
+        <!-- 5. HEM / DISIPLIN -->
+        <div class="mb-4">
+          <div class="font-bold mb-1">5. HAL EHWAL MURID / DISIPLIN :</div>
+          <table class="w-full border-collapse border border-black text-[10px]">
+            <tr>
+              <td class="border border-black p-1.5 w-2/3">A. BIL MURID HADIR LEWAT :</td>
+              <td class="border border-black p-1.5 font-bold"><span id="p_muridLewat">0</span> MURID</td>
+            </tr>
+            <tr>
+              <td class="border border-black p-1.5">B. BIL MURID KE KLINIK / HOSPITAL / PULANG AWAL PADA HARI INI :</td>
+              <td class="border border-black p-1.5 font-bold"><span id="p_muridKlinik">0</span> MURID</td>
+            </tr>
+            <tr>
+              <td class="border border-black p-1.5">C. TAHAP DISIPLIN MURID KESELURUHAN :</td>
+              <td class="border border-black p-1.5">
+                <div class="flex gap-4 font-bold" id="p_disiplinChecks"></div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- 6. TAHAP KESELAMATAN -->
+        <div class="mb-4">
+          <div class="font-bold mb-1">6. TAHAP KESELAMATAN SEKOLAH :</div>
+          <table class="w-full border-collapse border border-black text-[10px]">
+            <tr>
+              <td class="border border-black p-1.5 w-2/3">A. TAHAP KESELAMATAN SEKOLAH KESELURUHAN :</td>
+              <td class="border border-black p-1.5">
+                <div class="flex gap-4 font-bold" id="p_keselamatanChecks"></div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2" class="border border-black p-1.5">
+                <div class="font-semibold text-[9px] mb-1">B. Sekiranya tahap keselamatan lemah atau berlaku kemalangan yang mengancam keselamatan, sila nyatakan :</div>
+                <div id="p_catatanKeselamatan" class="min-h-[20px] whitespace-pre-line italic">Tiada sebarang insiden dilaporkan.</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- 7. PELAWAT -->
+        <div class="mb-4">
+          <div class="font-bold mb-1">7. PELAWAT SILA NYATAKAN (RUJUK BUKU PELAWAT) :</div>
+          <table class="w-full border-collapse border border-black text-[10px]">
+            <thead>
+              <tr class="bg-gray-100 font-bold">
+                <td class="border border-black p-1 text-center w-8">BIL</td>
+                <td class="border border-black p-1">NAMA PELAWAT / PEGAWAI</td>
+                <td class="border border-black p-1">URUSAN</td>
+              </tr>
+            </thead>
+            <tbody id="p_tbodyVisitors"></tbody>
+          </table>
+        </div>
+
+        <!-- 8. AKTIVITI / PROGRAM -->
+        <div class="mb-4">
+          <div class="font-bold mb-1">8. LAPORAN AKTIVITI / PROGRAM / LAWATAN :</div>
+          <table class="w-full border-collapse border border-black text-[10px]">
+            <thead>
+              <tr class="bg-gray-100 font-bold">
+                <td class="border border-black p-1 text-center w-8">BIL</td>
+                <td class="border border-black p-1">AKTIVITI / PROGRAM / LAWATAN</td>
+                <td class="border border-black p-1">PENGLIBATAN</td>
+              </tr>
+            </thead>
+            <tbody id="p_tbodyActivities"></tbody>
+          </table>
+        </div>
+
+        <!-- 9. LAPORAN HARIAN -->
+        <div class="mb-4">
+          <div class="font-bold mb-1">9. LAPORAN HARIAN :</div>
+          <div id="p_laporanHarian" class="border border-black p-2 min-h-[35px] whitespace-pre-line text-[10px]"></div>
+        </div>
+
+        <!-- FOTO SIGNIFIKAN DALAM CETAKAN -->
+        <div class="mb-4" id="p_fotoSection">
+          <div class="font-bold mb-1">FOTO SIGNIFIKAN :</div>
+          <div id="p_fotoGrid" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+        </div>
+
+        <!-- TANDATANGAN PENGISI & PENGESAH -->
+        <div class="mt-8 pt-4 grid grid-cols-2 gap-8 text-[11px]">
+          <div>
+            <div class="font-bold mb-1">Disediakan oleh,</div>
+            <div class="h-20 flex items-center justify-start border-b border-black">
+              <img id="p_imgTtGuru" class="max-h-20 max-w-full object-contain hidden" alt="Tandatangan Pengisi">
+            </div>
+            <div class="mt-1">( <span id="p_namaGuruText" class="font-semibold">......................................................</span> )</div>
+            <div class="text-[10px] text-gray-600">Nama / Tandatangan Guru Bertugas</div>
+          </div>
+          <div>
+            <div class="font-bold mb-1">Disemak oleh,</div>
+            <div class="h-20 flex items-center justify-start border-b border-black">
+              <img id="p_imgTtPentadbir" class="max-h-20 max-w-full object-contain hidden" alt="Tandatangan Pentadbir">
+            </div>
+            <div class="mt-1">( <span id="p_namaPentadbirText" class="font-semibold">......................................................</span> )</div>
+            <div class="text-[10px] text-gray-600">Pengetua / Guru Penolong Kanan</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ======================================================== -->
+  <!--               SKRIP JAVASCRIPT APLIKASI                  -->
+  <!-- ======================================================== -->
+  <script>
+    // 1. URL RASMI GOOGLE APPS SCRIPT
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYvyphCIscCZR9p2on3ukNTyITiRj4DLLJp3sAFc72nKcpAXQRWU23RzR2Rs72Q7krZA/exec";
+
+    // 2. TAKWIM JADUAL GURU BERTUGAS 2026
+    const JADUAL_2026 = [
+      { minggu: "MINGGU 23", tarikhStr: "06.07.2026 hingga 10.07.2026", startDate: "2026-07-06", endDate: "2026-07-10", guru: ["Cikgu Tanty binti Ramli (K)", "Cikgu Muhammad Syadza bin Yusof", "Cikgu Siti Nur Hakimah binti Mohd Noor"], gkmp: "Cikgu Mohd Riduwan bin Mohd Yasan (GKMP Sains dan Matematik)" },
+      { minggu: "MINGGU 24", tarikhStr: "13.07.2026 hingga 17.07.2026", startDate: "2026-07-13", endDate: "2026-07-17", guru: ["Cikgu Muhammad Amirul Aiman bin Zakaria (K)", "Cikgu Norihan binti Yusof", "Cikgu Norul Hafidzah binti Hassan"], gkmp: "Cikgu Mohd Nizam bin Subani (GKMP Teknik Vokasional)" },
+      { minggu: "MINGGU 25", tarikhStr: "20.07.2026 hingga 24.07.2026", startDate: "2026-07-20", endDate: "2026-07-24", guru: ["Cikgu Norfaizah binti Ismail (K)", "Cikgu Lavanya a/p Vejayan", "Cikgu Nur Aina Najwa binti Mohd Nor"], gkmp: "Cikgu Mohamaad Fadzeli B. Azam (GKMP Sains Kemasyarakatan)" },
+      { minggu: "MINGGU 26", tarikhStr: "27.07.2026 hingga 31.07.2026", startDate: "2026-07-27", endDate: "2026-07-31", guru: ["Cikgu Muhammad Amirul Aiman bin Zakaria (K)", "Cikgu Tanty binti Ramli", "Cikgu Nur Aina Najwa binti Mohd Nor"], gkmp: "Cikgu Rohana binti Jasmin (GKMP Bahasa)" },
+      { minggu: "MINGGU 27", tarikhStr: "03.08.2026 hingga 07.08.2026", startDate: "2026-08-03", endDate: "2026-08-07", guru: ["Cikgu Nor hamizah binti Shafie (K)", "Cikgu Nur Fatin Nazirah binti Rashidi", "Cikgu Tan Bee Kean"], gkmp: "Cikgu Mohd Nizam bin Subani (GKMP Teknik Vokasional)" },
+      { minggu: "MINGGU 28", tarikhStr: "10.08.2026 hingga 14.08.2026", startDate: "2026-08-10", endDate: "2026-08-14", guru: ["Cgu Jessica Chan Lai Peng (K)", "Cikgu Siti Haniza binti Imran", "Cikgu Nurul Hamizah binti Mohd Said"], gkmp: "Cikgu Mohamaad Fadzeli B. Azam (GKMP Sains Kemasyarakatan)" },
+      { minggu: "MINGGU 29", tarikhStr: "17.08.2026 hingga 21.08.2026", startDate: "2026-08-17", endDate: "2026-08-21", guru: ["Cikgu Tamilvani a/p Krishnan (K)", "Cikgu Zaimah binti Samad", "Cikgu Norhayati binti Md. Zain"], gkmp: "Cikgu Rohana binti Jasmin (GKMP Bahasa)" },
+      { minggu: "MINGGU 30", tarikhStr: "24.08.2026 hingga 28.08.2026", startDate: "2026-08-24", endDate: "2026-08-28", guru: ["Cikgu Tanty binti Ramli (K)", "Cikgu Muhammad Syadza bin Yusof", "Cikgu Siti Nur Hakimah binti Mohd Noor"], gkmp: "Cikgu Mohd Riduwan bin Mohd Yasan (GKMP Sains dan Matematik)" },
+      { minggu: "MINGGU 31", tarikhStr: "07.09.2026 hingga 11.09.2026", startDate: "2026-09-07", endDate: "2026-09-11", guru: ["Cikgu Muhammad Amirul Aiman bin Zakaria (K)", "Cikgu Norihan binti Yusof", "Cikgu Norul Hafidzah binti Hassan"], gkmp: "Cikgu Mohamaad Fadzeli B. Azam (GKMP Sains Kemasyarakatan)" },
+      { minggu: "MINGGU 32", tarikhStr: "14.09.2026 hingga 18.09.2026", startDate: "2026-09-14", endDate: "2026-09-18", guru: ["Cikgu Norfaizah binti Ismail (K)", "Cikgu Lavanya a/p Vejayan", "Cikgu Nur Aina Najwa binti Mohd Nor"], gkmp: "Cikgu Rohana binti Jasmin (GKMP Bahasa)" },
+      { minggu: "MINGGU 33", tarikhStr: "21.09.2026 hingga 25.09.2026", startDate: "2026-09-21", endDate: "2026-09-25", guru: ["Cikgu Muhammad Syadza bin Yusof (K)", "Cikgu Norihan binti Yusof", "Cikgu Siti Nur Hakimah binti Mohd Noor"], gkmp: "Cikgu Mohd Riduwan bin Mohd Yasan (GKMP Sains dan Matematik)" },
+      { minggu: "MINGGU 34", tarikhStr: "28.09.2026 hingga 02.10.2026", startDate: "2026-09-28", endDate: "2026-10-02", guru: ["Cikgu Nur Fatin Nazirah binti Rashidi (K)", "Cikgu Nor hamizah binti Shafie", "Cikgu Tan Bee Kean"], gkmp: "Cikgu Mohd Nizam bin Subani (GKMP Teknik Vokasional)" },
+      { minggu: "MINGGU 35", tarikhStr: "05.10.2026 hingga 09.10.2026", startDate: "2026-10-05", endDate: "2026-10-09", guru: ["Cikgu Siti Haniza binti Imran (K)", "Cikgu Jessica Chan Lai Peng", "Cikgu Nurul Hamizah binti Mohd Said"], gkmp: "Cikgu Rohana binti Jasmin (GKMP Bahasa)" },
+      { minggu: "MINGGU 36", tarikhStr: "12.10.2026 hingga 16.10.2026", startDate: "2026-10-12", endDate: "2026-10-16", guru: ["Cikgu Zaimah binti Samad (K)", "Cikgu Tamilvani a/p Krishnan", "Cikgu Norhayati binti Md. Zain"], gkmp: "Cikgu Mohd Riduwan bin Mohd Yasan (GKMP Sains dan Matematik)" },
+      { minggu: "MINGGU 37", tarikhStr: "19.10.2026 hingga 23.10.2026", startDate: "2026-10-19", endDate: "2026-10-23", guru: ["Cikgu Muhammad Syadza bin Yusof (K)", "Cikgu Tanty binti Ramli", "Cikgu Siti Nur Hakimah binti Mohd Noor"], gkmp: "Cikgu Mohd Nizam bin Subani (GKMP Teknik Vokasional)" },
+      { minggu: "MINGGU 38", tarikhStr: "26.10.2026 hingga 30.10.2026", startDate: "2026-10-26", endDate: "2026-10-30", guru: ["Cikgu Norihan binti Yusof (K)", "Cikgu Muhammad Amirul Aiman bin Zakaria", "Cikgu Norul Hafidzah binti Hassan"], gkmp: "Cikgu Mohamaad Fadzeli B. Azam (GKMP Sains Kemasyarakatan)" },
+      { minggu: "MINGGU 39", tarikhStr: "02.11.2026 hingga 06.11.2026", startDate: "2026-11-02", endDate: "2026-11-06", guru: ["Cikgu Lavanya a/p Vejayan (K)", "Cikgu Norfaizah binti Ismail", "Cikgu Nur Aina Najwa binti Mohd Nor"], gkmp: "Cikgu Mohd Riduwan bin Mohd Yasan (GKMP Sains dan Matematik)" },
+      { minggu: "MINGGU 40", tarikhStr: "09.11.2026 hingga 13.11.2026", startDate: "2026-11-09", endDate: "2026-11-13", guru: ["Cikgu Siti Nur Hakimah binti Mohd Noor (K)", "Cikgu Norul Hafidzah binti Hassan", "Cikgu Nur Aina Najwa binti Mohd Nor"], gkmp: "Cikgu Mohd Nizam bin Subani (GKMP Teknik Vokasional)" },
+      { minggu: "MINGGU 41", tarikhStr: "16.11.2026 hingga 20.11.2026", startDate: "2026-11-16", endDate: "2026-11-20", guru: ["Cikgu Tan Bee Kean (K)", "Cikgu Nor hamizah binti Shafie", "Cikgu Nur Fatin Nazirah binti Rashidi"], gkmp: "Cikgu Mohamaad Fadzeli B. Azam (GKMP Sains Kemasyarakatan)" },
+      { minggu: "MINGGU 42", tarikhStr: "23.11.2026 hingga 27.11.2026", startDate: "2026-11-23", endDate: "2026-11-27", guru: ["Cikgu Nurul Hamizah binti Mohd Said (K)", "Cgu Jessica Chan Lai Peng", "Cikgu Siti Haniza binti Imran"], gkmp: "Cikgu Rohana binti Jasmin (GKMP Bahasa)" },
+      { minggu: "MINGGU 43", tarikhStr: "30.11.2026 hingga 04.12.2026", startDate: "2026-11-30", endDate: "2026-12-04", guru: ["Cikgu Norhayati binti Md. Zain (K)", "Cikgu Tamilvani a/p Krishnan", "Cikgu Zaimah binti Samad"], gkmp: "Cikgu Mohd Riduwan bin Mohd Yasan (GKMP Sains dan Matematik)" }
+    ];
+
+    const SENARAI_PEMANTAUAN = [
+      { id: "A", name: "A. KAWASAN SEKOLAH" },
+      { id: "B", name: "B. KANTIN" },
+      { id: "C", name: "C. PADANG" },
+      { id: "D", name: "D. TANDAS" },
+      { id: "E", name: "E. LONGKANG" },
+      { id: "F", name: "F. BILIK DARJAH / BILIK KHAS" },
+      { id: "G", name: "G. PELUPUSAN SAMPAH" }
+    ];
+
+    let allReports = [];
+    let currentEditReportId = null;
+    let compressedPhotos = [];
+
+    // 3. INISIALISASI
+    window.addEventListener("DOMContentLoaded", () => {
+      initJadualDropdown();
+      initMonitoringTable();
+      initDefaultTables();
+      initSignaturePads();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const page = urlParams.get("page") || "pelaporan";
+      const id = urlParams.get("id");
+
+      navigate(page, false);
+
+      if (id) {
+        if (page === "pelaporan") loadReportForEdit(id);
+        else if (page === "cetakan") loadReportForPrint(id);
+      }
+
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("formTarikh").value = today;
+      autoFillDay(today);
+      matchScheduleByDate(today);
+
+      fetchReportsFromSheet();
+    });
+
+    function navigate(pageId, pushState = true) {
+      ["pelaporan", "dashboard", "cetakan"].forEach(p => {
+        document.getElementById(`page-${p}`).classList.add("hidden");
+        const btn = document.getElementById(`nav-${p}`);
+        if (btn) {
+          btn.classList.remove("bg-emerald-800", "text-white", "shadow");
+          btn.classList.add("hover:bg-emerald-600");
+        }
+      });
+
+      document.getElementById(`page-${pageId}`).classList.remove("hidden");
+      const activeBtn = document.getElementById(`nav-${pageId}`);
+      if (activeBtn) activeBtn.classList.add("bg-emerald-800", "text-white", "shadow");
+
+      if (pushState) {
+        let url = `?page=${pageId}`;
+        if (currentEditReportId && (pageId === "pelaporan" || pageId === "cetakan")) {
+          url += `&id=${currentEditReportId}`;
+        }
+        history.pushState(null, "", url);
+      }
+
+      if (pageId === "dashboard") renderDashboardTable();
+    }
+
+    // 4. JADUAL BERTUGAS LOGIK
+    function initJadualDropdown() {
+      const select = document.getElementById("selectMingguJadual");
+      select.innerHTML = "";
+      JADUAL_2026.forEach((item, index) => {
+        const opt = document.createElement("option");
+        opt.value = index;
+        opt.textContent = `${item.minggu} (${item.tarikhStr})`;
+        select.appendChild(opt);
+      });
+      displaySchedule(0);
+    }
+
+    function onWeekSelectionChanged() {
+      const idx = document.getElementById("selectMingguJadual").value;
+      displaySchedule(idx);
+    }
+
+    function displaySchedule(idx) {
+      const item = JADUAL_2026[idx];
+      document.getElementById("currentWeekDisplay").textContent = `${item.minggu} : ${item.tarikhStr}`;
+      document.getElementById("currentGkmpDisplay").innerHTML = `<i class="fa-solid fa-user-tie mr-1"></i> GKMP: <b>${item.gkmp}</b>`;
+
+      const listDiv = document.getElementById("rosterList");
+      listDiv.innerHTML = "";
+      item.guru.forEach(g => {
+        const isKetua = g.includes("(K)");
+        const pill = document.createElement("div");
+        pill.className = `p-2 rounded-lg flex items-center gap-2 ${isKetua ? 'bg-amber-400 text-slate-900 font-bold' : 'bg-emerald-900/60 text-white font-medium'}`;
+        pill.innerHTML = `<i class="fa-solid ${isKetua ? 'fa-star text-amber-900' : 'fa-chalkboard-user text-emerald-300'}"></i> <span>${g}</span>`;
+        listDiv.appendChild(pill);
+      });
+
+      document.getElementById("formMinggu").value = item.minggu;
+      for (let i = 1; i <= 6; i++) {
+        document.getElementById(`gb_${i}`).value = item.guru[i - 1] || "";
+      }
+    }
+
+    function matchScheduleByDate(dateStr) {
+      const foundIdx = JADUAL_2026.findIndex(j => dateStr >= j.startDate && dateStr <= j.endDate);
+      if (foundIdx !== -1) {
+        document.getElementById("selectMingguJadual").value = foundIdx;
+        displaySchedule(foundIdx);
+      }
+    }
+
+    function autoFillDay(dateStr) {
+      if (!dateStr) return;
+      const days = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
+      const d = new Date(dateStr);
+      document.getElementById("formHari").value = days[d.getDay()];
+      matchScheduleByDate(dateStr);
+    }
+
+    // 5. INPUT JADUAL DINAMIK
+    function initMonitoringTable() {
+      const tbody = document.getElementById("tbodyMonitoring");
+      tbody.innerHTML = "";
+      SENARAI_PEMANTAUAN.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="p-2 text-left font-semibold text-slate-700">${item.name}</td>
+          <td class="p-2"><input type="radio" name="mon_${item.id}" value="1" class="text-emerald-600"></td>
+          <td class="p-2"><input type="radio" name="mon_${item.id}" value="2" class="text-emerald-600"></td>
+          <td class="p-2"><input type="radio" name="mon_${item.id}" value="3" checked class="text-emerald-600"></td>
+          <td class="p-2"><input type="radio" name="mon_${item.id}" value="4" class="text-emerald-600"></td>
+          <td class="p-2"><input type="text" id="mon_catatan_${item.id}" placeholder="Catatan..." class="w-full px-2 py-1 border rounded text-xs"></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function initDefaultTables() {
+      for (let i = 0; i < 3; i++) addAbsentTeacherRow();
+      for (let i = 0; i < 2; i++) addVisitorRow();
+      for (let i = 0; i < 2; i++) addActivityRow();
+    }
+
+    function addAbsentTeacherRow(nama = "", sebab = "") {
+      const tbody = document.getElementById("tbodyAbsentTeachers");
+      const count = tbody.children.length + 1;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="p-2 text-center font-bold text-slate-500">${count}</td>
+        <td class="p-2"><input type="text" value="${nama}" placeholder="Nama Guru" class="w-full px-2 py-1 border rounded text-xs abs-name"></td>
+        <td class="p-2"><input type="text" value="${sebab}" placeholder="Cuti Rehat / Mesyuarat / Kursus" class="w-full px-2 py-1 border rounded text-xs abs-reason"></td>
+        <td class="p-2 text-center"><button type="button" onclick="this.closest('tr').remove()" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function addVisitorRow(nama = "", urusan = "") {
+      const tbody = document.getElementById("tbodyVisitors");
+      const count = tbody.children.length + 1;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="p-2 text-center font-bold text-slate-500">${count}</td>
+        <td class="p-2"><input type="text" value="${nama}" placeholder="Nama Pegawai / Pelawat" class="w-full px-2 py-1 border rounded text-xs vis-name"></td>
+        <td class="p-2"><input type="text" value="${urusan}" placeholder="Tujuan Urusan" class="w-full px-2 py-1 border rounded text-xs vis-purpose"></td>
+        <td class="p-2 text-center"><button type="button" onclick="this.closest('tr').remove()" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function addActivityRow(program = "", penglibatan = "") {
+      const tbody = document.getElementById("tbodyActivities");
+      const count = tbody.children.length + 1;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="p-2 text-center font-bold text-slate-500">${count}</td>
+        <td class="p-2"><input type="text" value="${program}" placeholder="Nama Aktiviti / Taklimat" class="w-full px-2 py-1 border rounded text-xs act-name"></td>
+        <td class="p-2"><input type="text" value="${penglibatan}" placeholder="Semua Pelajar / Warga Sekolah" class="w-full px-2 py-1 border rounded text-xs act-involvement"></td>
+        <td class="p-2 text-center"><button type="button" onclick="this.closest('tr').remove()" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    // 6. MAMPATAN GAMBAR AUTO (MAKSIMUM 4 GAMBAR)
+    async function handleImageSelection(e) {
+      const files = Array.from(e.target.files);
+      if (files.length + compressedPhotos.length > 4) {
+        showToast("Maksimum 4 keping foto sahaja dibenarkan!", "error");
+        return;
+      }
+
+      for (const file of files) {
+        if (compressedPhotos.length >= 4) break;
+        // Resolusi maksimum 500px, kualiti 0.5 (~15KB)
+        const compressedBase64 = await compressImageFile(file, 500, 0.5);
+        compressedPhotos.push(compressedBase64);
+      }
+
+      renderPhotoPreviews();
+      e.target.value = "";
+    }
+
+    function compressImageFile(file, maxDimension = 500, quality = 0.5) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height && width > maxDimension) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else if (height > maxDimension) {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+        };
+      });
+    }
+
+    function renderPhotoPreviews() {
+      const container = document.getElementById("fotoPreviewContainer");
+      container.innerHTML = "";
+      compressedPhotos.forEach((src, idx) => {
+        const div = document.createElement("div");
+        div.className = "relative rounded-lg overflow-hidden border border-slate-300 shadow-sm bg-black/5 aspect-video";
+        div.innerHTML = `
+          <img src="${src}" class="w-full h-full object-cover">
+          <button type="button" onclick="removePhoto(${idx})" class="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-rose-700">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function removePhoto(idx) {
+      compressedPhotos.splice(idx, 1);
+      renderPhotoPreviews();
+    }
+
+    // 7. TANDATANGAN DIGITAL CANVAS
+    const pads = {};
+
+    function initSignaturePads() {
+      ["canvasGuru", "canvasPentadbir"].forEach(id => {
+        const canvas = document.getElementById(id);
+        const ctx = canvas.getContext("2d");
+        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        let isDrawing = false;
+        let hasDrawn = false;
+
+        const getPos = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+          };
+        };
+
+        const startDraw = (e) => {
+          e.preventDefault();
+          isDrawing = true;
+          hasDrawn = true;
+          const pos = getPos(e);
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y);
+        };
+
+        const draw = (e) => {
+          if (!isDrawing) return;
+          e.preventDefault();
+          const pos = getPos(e);
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+        };
+
+        const stopDraw = () => { isDrawing = false; };
+
+        canvas.addEventListener("mousedown", startDraw);
+        canvas.addEventListener("mousemove", draw);
+        window.addEventListener("mouseup", stopDraw);
+
+        canvas.addEventListener("touchstart", startDraw, { passive: false });
+        canvas.addEventListener("touchmove", draw, { passive: false });
+        canvas.addEventListener("touchend", stopDraw);
+
+        pads[id] = { canvas, ctx, hasDrawn: () => hasDrawn, resetFlag: () => { hasDrawn = false; } };
+      });
+    }
+
+    function clearSignature(id) {
+      const pad = pads[id];
+      if (pad) {
+        pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+        pad.resetFlag();
+      }
+    }
+
+    function setSignatureFromBase64(id, base64) {
+      clearSignature(id);
+      if (!base64) return;
+      const pad = pads[id];
+      const img = new Image();
+      img.src = base64;
+      img.onload = () => pad.ctx.drawImage(img, 0, 0);
+    }
+
+    // 8. PENGHANTARAN & KEMASKINI
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById("btnSubmitForm");
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+
+      const absentTeachers = [];
+      document.querySelectorAll("#tbodyAbsentTeachers tr").forEach(tr => {
+        const nama = tr.querySelector(".abs-name")?.value.trim();
+        const sebab = tr.querySelector(".abs-reason")?.value.trim();
+        if (nama) absentTeachers.push({ nama, sebab });
+      });
+
+      const pemantauan = {};
+      SENARAI_PEMANTAUAN.forEach(item => {
+        const rating = document.querySelector(`input[name="mon_${item.id}"]:checked`)?.value || "3";
+        const catatan = document.getElementById(`mon_catatan_${item.id}`)?.value || "";
+        pemantauan[item.id] = { rating, catatan };
+      });
+
+      const pelawat = [];
+      document.querySelectorAll("#tbodyVisitors tr").forEach(tr => {
+        const nama = tr.querySelector(".vis-name")?.value.trim();
+        const urusan = tr.querySelector(".vis-purpose")?.value.trim();
+        if (nama) pelawat.push({ nama, urusan });
+      });
+
+      const aktiviti = [];
+      document.querySelectorAll("#tbodyActivities tr").forEach(tr => {
+        const nama = tr.querySelector(".act-name")?.value.trim();
+        const penglibatan = tr.querySelector(".act-involvement")?.value.trim();
+        if (nama) aktiviti.push({ nama, penglibatan });
+      });
+
+      const guruBertugasList = [];
+      for (let i = 1; i <= 6; i++) {
+        const val = document.getElementById(`gb_${i}`).value.trim();
+        if (val) guruBertugasList.push(val);
+      }
+
+      const ttGuru = pads["canvasGuru"].hasDrawn() ? pads["canvasGuru"].canvas.toDataURL("image/png") : "";
+      const ttPentadbir = pads["canvasPentadbir"].hasDrawn() ? pads["canvasPentadbir"].canvas.toDataURL("image/png") : "";
+
+      const reportPayload = {
+        ID: currentEditReportId,
+        Minggu: document.getElementById("formMinggu").value,
+        Tarikh: document.getElementById("formTarikh").value,
+        Hari: document.getElementById("formHari").value,
+        Kehadiran_Guru: document.getElementById("formKehadiranGuru").value,
+        Guru_Bertugas: guruBertugasList,
+        GKMP: document.getElementById("currentGkmpDisplay").innerText.replace("GKMP:", "").trim(),
+        Ucapan_Pengetua: document.getElementById("ucapanPengetua").value,
+        Ucapan_PK: document.getElementById("ucapanPK").value,
+        Ucapan_GuruBertugas: document.getElementById("ucapanGuruBertugas").value,
+        Lain_Ucapan: document.getElementById("lainUcapan").value,
+        Komen_Perhimpunan: document.getElementById("komenPerhimpunan").value,
+        Guru_Tidak_Hadir: absentTeachers,
+        Pemantauan: pemantauan,
+        Murid_Lewat: document.getElementById("muridLewat").value,
+        Murid_Klinik: document.getElementById("muridKlinik").value,
+        Tahap_Disiplin: document.querySelector('input[name="tahapDisiplin"]:checked')?.value || "Baik",
+        Tahap_Keselamatan: document.querySelector('input[name="tahapKeselamatan"]:checked')?.value || "Baik",
+        Catatan_Keselamatan: document.getElementById("catatanKeselamatan").value,
+        Pelawat: pelawat,
+        Aktiviti: aktiviti,
+        Laporan_Harian: document.getElementById("laporanHarian").value,
+        Foto_1: compressedPhotos[0] || "",
+        Foto_2: compressedPhotos[1] || "",
+        Foto_3: compressedPhotos[2] || "",
+        Foto_4: compressedPhotos[3] || "",
+        TT_Guru: ttGuru,
+        TT_Pentadbir: ttPentadbir
+      };
+
+      const isUpdate = !!currentEditReportId;
+      const requestData = {
+        action: isUpdate ? "update" : "create",
+        data: reportPayload
+      };
+
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(requestData)
+        });
+        const result = await res.json();
+
+        if (result.status === "success") {
+          showToast(isUpdate ? "Laporan berjaya dikemaskini!" : "Laporan baharu berjaya disimpan!", "success");
+          currentEditReportId = result.id;
+
+          const nowStr = result.masaKemaskini || new Date().toLocaleString("ms-MY");
+          showUpdateBar(result.id, nowStr);
+
+          history.pushState(null, "", `?page=pelaporan&id=${result.id}`);
+          await fetchReportsFromSheet();
+        } else {
+          showToast("Ralat: " + result.message, "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Ralat rangkaian dengan Google Sheet.", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span id="submitBtnText">${currentEditReportId ? 'Kemaskini Laporan' : 'Simpan Laporan'}</span>`;
+      }
+    }
+
+    function showUpdateBar(id, timestamp) {
+      const bar = document.getElementById("updateStatusBar");
+      bar.classList.remove("hidden");
+      document.getElementById("activeReportIdDisplay").textContent = `ID: ${id}`;
+      document.getElementById("lastUpdatedDisplay").innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Terakhir dikemaskini: <b>${timestamp}</b>`;
+      document.getElementById("submitBtnText").textContent = "Kemaskini Laporan";
+    }
+
+    function resetFormToNew() {
+      currentEditReportId = null;
+      document.getElementById("reportForm").reset();
+      document.getElementById("updateStatusBar").classList.add("hidden");
+      document.getElementById("submitBtnText").textContent = "Simpan Laporan";
+      compressedPhotos = [];
+      renderPhotoPreviews();
+      clearSignature("canvasGuru");
+      clearSignature("canvasPentadbir");
+
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("formTarikh").value = today;
+      autoFillDay(today);
+      history.pushState(null, "", "?page=pelaporan");
+      showToast("Borang diset semula untuk laporan baharu.", "info");
+    }
+
+    // 9. DAPATKAN REKOD SHEET (DASHBOARD & CETAKAN)
+    async function fetchReportsFromSheet() {
+      try {
+        const res = await fetch(`${APPS_SCRIPT_URL}?action=getAll`);
+        const json = await res.json();
+        if (json.status === "success") {
+          allReports = json.data;
+          updateDashboardStats();
+          renderDashboardTable();
+          populatePrintSelect();
+        }
+      } catch (e) {
+        console.warn("Gagal memuat turun data Sheet:", e);
+      }
+    }
+
+    function updateDashboardStats() {
+      document.getElementById("statTotalReports").textContent = allReports.length;
+      const verified = allReports.filter(r => r.Status === "Disahkan").length;
+      document.getElementById("statVerifiedCount").textContent = verified;
+
+      const totalLate = allReports.reduce((sum, r) => sum + (Number(r.Murid_Lewat) || 0), 0);
+      const avgLate = allReports.length ? (totalLate / allReports.length).toFixed(1) : 0;
+      document.getElementById("statAvgLate").textContent = avgLate;
+    }
+
+    function renderDashboardTable() {
+      const tbody = document.getElementById("dashboardTableBody");
+      const search = (document.getElementById("dashboardSearchInput")?.value || "").toLowerCase();
+      tbody.innerHTML = "";
+
+      const filtered = allReports.filter(r => {
+        const str = `${r.ID} ${r.Minggu} ${r.Tarikh} ${r.Guru_Bertugas_JSON}`.toLowerCase();
+        return str.includes(search);
+      });
+
+      document.getElementById("recordCountBadge").textContent = `${filtered.length} Rekod`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Tiada rekod laporan ditemui.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(r => {
+        let guruList = [];
+        try { guruList = JSON.parse(r.Guru_Bertugas_JSON); } catch(e){}
+        const ketua = guruList.find(g => g.includes("(K)")) || guruList[0] || "-";
+
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="p-3">
+            <div class="font-bold font-mono text-slate-800">${r.ID}</div>
+            <div class="text-[11px] text-slate-500">${r.Tarikh} (${r.Hari})</div>
+          </td>
+          <td class="p-3 font-semibold text-slate-700">${r.Minggu}</td>
+          <td class="p-3">
+            <span class="inline-block px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded font-medium">${ketua}</span>
+            <div class="text-[10px] text-slate-400 mt-0.5">${guruList.length} Orang Guru</div>
+          </td>
+          <td class="p-3 text-center">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${r.Status === 'Disahkan' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+              ${r.Status || 'Draf'}
+            </span>
+          </td>
+          <td class="p-3 text-slate-500 text-[11px]">${r.Tarikh_Kemaskini || r.Tarikh_Dicipta}</td>
+          <td class="p-3 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="loadReportForEdit('${r.ID}')" title="Kemaskini" class="p-1.5 bg-amber-100 text-amber-800 rounded hover:bg-amber-200">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button onclick="loadReportForPrint('${r.ID}')" title="Cetak" class="p-1.5 bg-emerald-100 text-emerald-800 rounded hover:bg-emerald-200">
+                <i class="fa-solid fa-print"></i>
+              </button>
+              <button onclick="copySpecificReportUrl('${r.ID}')" title="Salin URL" class="p-1.5 bg-slate-100 text-slate-700 rounded hover:bg-slate-200">
+                <i class="fa-solid fa-link"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 10. EDIT & CETAK DARI ID
+    async function loadReportForEdit(id) {
+      showToast("Memuat laporan...", "info");
+      try {
+        const res = await fetch(`${APPS_SCRIPT_URL}?id=${id}`);
+        const json = await res.json();
+        if (json.status !== "success") throw new Error(json.message);
+        const data = json.data;
+
+        currentEditReportId = data.ID;
+        navigate("pelaporan", false);
+        history.pushState(null, "", `?page=pelaporan&id=${data.ID}`);
+
+        showUpdateBar(data.ID, data.Tarikh_Kemaskini || data.Tarikh_Dicipta);
+
+        document.getElementById("formMinggu").value = data.Minggu;
+        document.getElementById("formTarikh").value = data.Tarikh;
+        document.getElementById("formHari").value = data.Hari;
+        document.getElementById("formKehadiranGuru").value = data.Kehadiran_Guru;
+
+        let gb = [];
+        try { gb = JSON.parse(data.Guru_Bertugas_JSON); } catch(e){}
+        for (let i = 1; i <= 6; i++) {
+          document.getElementById(`gb_${i}`).value = gb[i - 1] || "";
+        }
+
+        document.getElementById("ucapanPengetua").value = data.Ucapan_Pengetua || "";
+        document.getElementById("ucapanPK").value = data.Ucapan_PK || "";
+        document.getElementById("ucapanGuruBertugas").value = data.Ucapan_GuruBertugas || "";
+        document.getElementById("lainUcapan").value = data.Lain_Ucapan || "";
+        document.getElementById("komenPerhimpunan").value = data.Komen_Perhimpunan || "";
+
+        const tbodyAbs = document.getElementById("tbodyAbsentTeachers");
+        tbodyAbs.innerHTML = "";
+        let absentList = [];
+        try { absentList = JSON.parse(data.Guru_Tidak_Hadir_JSON); } catch(e){}
+        if (absentList.length > 0) {
+          absentList.forEach(item => addAbsentTeacherRow(item.nama, item.sebab));
+        } else {
+          addAbsentTeacherRow();
+        }
+
+        let mon = {};
+        try { mon = JSON.parse(data.Pemantauan_JSON); } catch(e){}
+        SENARAI_PEMANTAUAN.forEach(item => {
+          if (mon[item.id]) {
+            const radio = document.querySelector(`input[name="mon_${item.id}"][value="${mon[item.id].rating}"]`);
+            if (radio) radio.checked = true;
+            document.getElementById(`mon_catatan_${item.id}`).value = mon[item.id].catatan || "";
+          }
+        });
+
+        document.getElementById("muridLewat").value = data.Murid_Lewat || 0;
+        document.getElementById("muridKlinik").value = data.Murid_Klinik || 0;
+        const radDis = document.querySelector(`input[name="tahapDisiplin"][value="${data.Tahap_Disiplin}"]`);
+        if (radDis) radDis.checked = true;
+        const radKes = document.querySelector(`input[name="tahapKeselamatan"][value="${data.Tahap_Keselamatan}"]`);
+        if (radKes) radKes.checked = true;
+        document.getElementById("catatanKeselamatan").value = data.Catatan_Keselamatan || "";
+
+        const tbodyVis = document.getElementById("tbodyVisitors");
+        tbodyVis.innerHTML = "";
+        let visList = [];
+        try { visList = JSON.parse(data.Pelawat_JSON); } catch(e){}
+        if (visList.length > 0) {
+          visList.forEach(v => addVisitorRow(v.nama, v.urusan));
+        } else {
+          addVisitorRow();
+        }
+
+        const tbodyAct = document.getElementById("tbodyActivities");
+        tbodyAct.innerHTML = "";
+        let actList = [];
+        try { actList = JSON.parse(data.Aktiviti_JSON); } catch(e){}
+        if (actList.length > 0) {
+          actList.forEach(a => addActivityRow(a.nama, a.penglibatan));
+        } else {
+          addActivityRow();
+        }
+
+        document.getElementById("laporanHarian").value = data.Laporan_Harian || "";
+
+        compressedPhotos = [data.Foto_1, data.Foto_2, data.Foto_3, data.Foto_4].filter(Boolean);
+        renderPhotoPreviews();
+
+        setSignatureFromBase64("canvasGuru", data.TT_Guru);
+        setSignatureFromBase64("canvasPentadbir", data.TT_Pentadbir);
+
+        showToast("Laporan sedia dikemaskini.", "success");
+      } catch (err) {
+        showToast("Gagal memuatkan rekod: " + err.message, "error");
+      }
+    }
+
+    function populatePrintSelect() {
+      const sel = document.getElementById("printReportSelect");
+      sel.innerHTML = "";
+      allReports.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.ID;
+        opt.textContent = `${r.ID} - ${r.Tarikh} (${r.Minggu})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    async function loadReportForPrint(id) {
+      if (!id && allReports.length > 0) id = allReports[0].ID;
+      if (!id) return;
+
+      currentEditReportId = id;
+      navigate("cetakan", false);
+      history.pushState(null, "", `?page=cetakan&id=${id}`);
+      document.getElementById("printReportSelect").value = id;
+
+      try {
+        const res = await fetch(`${APPS_SCRIPT_URL}?id=${id}`);
+        const json = await res.json();
+        const d = json.data;
+
+        document.getElementById("p_minggu").textContent = d.Minggu || "-";
+        document.getElementById("p_tarikh").textContent = d.Tarikh || "-";
+        document.getElementById("p_hari").textContent = d.Hari || "-";
+        document.getElementById("p_kehadiran").textContent = d.Kehadiran_Guru || "-";
+
+        let gb = [];
+        try { gb = JSON.parse(d.Guru_Bertugas_JSON); } catch(e){}
+        for (let i = 1; i <= 6; i++) {
+          document.getElementById(`p_gb${i}`).textContent = gb[i - 1] || "";
+        }
+
+        document.getElementById("p_ucapanPengetua").textContent = d.Ucapan_Pengetua || "-";
+        document.getElementById("p_ucapanPK").textContent = d.Ucapan_PK || "-";
+        document.getElementById("p_ucapanGB").textContent = d.Ucapan_GuruBertugas || "-";
+        document.getElementById("p_lainUcapan").textContent = d.Lain_Ucapan || "-";
+        document.getElementById("p_komenPerhimpunan").textContent = d.Komen_Perhimpunan || "-";
+
+        let abs = [];
+        try { abs = JSON.parse(d.Guru_Tidak_Hadir_JSON); } catch(e){}
+        const tbAbs = document.getElementById("p_tbodyAbsent");
+        tbAbs.innerHTML = "";
+        for (let i = 0; i < 4; i++) {
+          const item1 = abs[i] || { nama: "", sebab: "" };
+          const item2 = abs[i + 4] || { nama: "", sebab: "" };
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border border-black p-1 text-center font-bold">${i + 1}.</td>
+            <td class="border border-black p-1">${item1.nama}</td>
+            <td class="border border-black p-1">${item1.sebab}</td>
+            <td class="border border-black p-1 text-center font-bold">${i + 5}.</td>
+            <td class="border border-black p-1">${item2.nama}</td>
+            <td class="border border-black p-1">${item2.sebab}</td>
+          `;
+          tbAbs.appendChild(tr);
+        }
+
+        let mon = {};
+        try { mon = JSON.parse(d.Pemantauan_JSON); } catch(e){}
+        const tbMon = document.getElementById("p_tbodyMonitoring");
+        tbMon.innerHTML = "";
+        SENARAI_PEMANTAUAN.forEach(item => {
+          const r = mon[item.id]?.rating || "3";
+          const cat = mon[item.id]?.catatan || "";
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border border-black p-1 text-left font-bold">${item.name}</td>
+            <td class="border border-black p-1">${r === "1" ? "√" : ""}</td>
+            <td class="border border-black p-1">${r === "2" ? "√" : ""}</td>
+            <td class="border border-black p-1">${r === "3" ? "√" : ""}</td>
+            <td class="border border-black p-1">${r === "4" ? "√" : ""}</td>
+            <td class="border border-black p-1 text-left">${cat}</td>
+          `;
+          tbMon.appendChild(tr);
+        });
+
+        document.getElementById("p_muridLewat").textContent = d.Murid_Lewat || "0";
+        document.getElementById("p_muridKlinik").textContent = d.Murid_Klinik || "0";
+        
+        const disOpts = ["Cemerlang", "Baik", "Memuaskan", "Lemah"];
+        document.getElementById("p_disiplinChecks").innerHTML = disOpts.map(o => 
+          `<span>[${d.Tahap_Disiplin === o ? ' √ ' : '  '}] ${o}</span>`
+        ).join("");
+
+        document.getElementById("p_keselamatanChecks").innerHTML = disOpts.map(o => 
+          `<span>[${d.Tahap_Keselamatan === o ? ' √ ' : '  '}] ${o}</span>`
+        ).join("");
+
+        document.getElementById("p_catatanKeselamatan").textContent = d.Catatan_Keselamatan || "Tiada kemalangan atau isu keselamatan.";
+
+        let vis = [];
+        try { vis = JSON.parse(d.Pelawat_JSON); } catch(e){}
+        const tbVis = document.getElementById("p_tbodyVisitors");
+        tbVis.innerHTML = "";
+        for (let i = 0; i < 4; i++) {
+          const item = vis[i] || { nama: "", urusan: "" };
+          tbVis.innerHTML += `
+            <tr>
+              <td class="border border-black p-1 text-center font-bold">${i + 1}.</td>
+              <td class="border border-black p-1">${item.nama}</td>
+              <td class="border border-black p-1">${item.urusan}</td>
+            </tr>
+          `;
+        }
+
+        let act = [];
+        try { act = JSON.parse(d.Aktiviti_JSON); } catch(e){}
+        const tbAct = document.getElementById("p_tbodyActivities");
+        tbAct.innerHTML = "";
+        for (let i = 0; i < 4; i++) {
+          const item = act[i] || { nama: "", penglibatan: "" };
+          tbAct.innerHTML += `
+            <tr>
+              <td class="border border-black p-1 text-center font-bold">${i + 1}.</td>
+              <td class="border border-black p-1">${item.nama}</td>
+              <td class="border border-black p-1">${item.penglibatan}</td>
+            </tr>
+          `;
+        }
+
+        document.getElementById("p_laporanHarian").textContent = d.Laporan_Harian || "-";
+
+        const photoGrid = document.getElementById("p_fotoGrid");
+        photoGrid.innerHTML = "";
+        const photos = [d.Foto_1, d.Foto_2, d.Foto_3, d.Foto_4].filter(Boolean);
+        if (photos.length > 0) {
+          document.getElementById("p_fotoSection").classList.remove("hidden");
+          photos.forEach(p => {
+            photoGrid.innerHTML += `<div class="border border-black p-1"><img src="${p}" class="w-full h-28 object-cover"></div>`;
+          });
+        } else {
+          document.getElementById("p_fotoSection").classList.add("hidden");
+        }
+
+        const imgGuru = document.getElementById("p_imgTtGuru");
+        if (d.TT_Guru) {
+          imgGuru.src = d.TT_Guru;
+          imgGuru.classList.remove("hidden");
+        } else {
+          imgGuru.classList.add("hidden");
+        }
+
+        const imgPentadbir = document.getElementById("p_imgTtPentadbir");
+        if (d.TT_Pentadbir) {
+          imgPentadbir.src = d.TT_Pentadbir;
+          imgPentadbir.classList.remove("hidden");
+        } else {
+          imgPentadbir.classList.add("hidden");
+        }
+
+        document.getElementById("p_namaGuruText").textContent = gb[0] || "Guru Bertugas";
+        document.getElementById("p_namaPentadbirText").textContent = d.GKMP || "Pengetua / GPK";
+
+      } catch (err) {
+        showToast("Ralat memaparkan cetakan: " + err.message, "error");
+      }
+    }
+
+    function editLoadedPrintReport() {
+      if (currentEditReportId) loadReportForEdit(currentEditReportId);
+    }
+
+    function copyCurrentUrl() {
+      navigator.clipboard.writeText(window.location.href);
+      showToast("Pautan berjaya disalin!", "success");
+    }
+
+    function copyPrintUrl() {
+      copyCurrentUrl();
+    }
+
+    function copySpecificReportUrl(id) {
+      const url = `${window.location.origin}${window.location.pathname}?page=cetakan&id=${id}`;
+      navigator.clipboard.writeText(url);
+      showToast(`Pautan ${id} disalin!`, "success");
+    }
+
+    function showToast(msg, type = "info") {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.className = `no-print fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl shadow-2xl text-white font-medium flex items-center gap-3 transition ${
+        type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800'
+      }`;
+      t.classList.remove("hidden");
+      setTimeout(() => t.classList.add("hidden"), 3500);
+    }
+  </script>
+</body>
+</html>
