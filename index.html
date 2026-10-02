@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>e-Laporan Guru Bertugas Harian</title>
 
-  <!-- ================= FAVICON LOGO ================= -->
+  <!-- FAVICON LOGO -->
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
 
@@ -31,7 +31,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
 
-  <!-- ================= NAVIGASI ATAS DENGAN LOGO ================= -->
+  <!-- ================= NAVIGASI ATAS ================= -->
   <nav class="no-print bg-emerald-700 text-white shadow-md sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('pelaporan')">
@@ -51,6 +51,10 @@
         <button onclick="navigate('cetakan')" id="nav-cetakan" class="px-4 py-2 rounded-lg text-sm font-medium transition hover:bg-emerald-600">
           <i class="fa-solid fa-print mr-1"></i> Cetakan
         </button>
+        <!-- Butang Modal Admin -->
+        <button onclick="openAdminModal()" class="px-3 py-2 rounded-lg text-xs font-bold transition bg-amber-500 hover:bg-amber-600 text-slate-900 shadow ml-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-user-shield"></i> Urus Guru (Admin)
+        </button>
       </div>
     </div>
   </nav>
@@ -58,17 +62,16 @@
   <!-- ================= NOTIFIKASI / TOAST ================= -->
   <div id="toast" class="no-print fixed bottom-5 right-5 z-50 hidden px-5 py-3 rounded-xl shadow-2xl text-white font-medium flex items-center gap-3 transition"></div>
 
+  <!-- ================= DATALIST UNTUK AUTO-COMPLETE ================= -->
+  <datalist id="listGuruAutocomplete"></datalist>
+
   <!-- ================= KANDUNGAN UTAMA ================= -->
   <div class="max-w-6xl mx-auto p-4 md:p-6">
 
-    <!-- ======================================================== -->
-    <!--                   PAGE 1: PELAPORAN                      -->
-    <!-- ======================================================== -->
+    <!-- ================= PAGE 1: PELAPORAN ================= -->
     <div id="page-pelaporan" class="space-y-6">
       
-      <!-- ======================================================== -->
-      <!--    PERINGATAN ATAS SEKALI: LAPORAN TELAH DIISI PADA TARIKH -->
-      <!-- ======================================================== -->
+      <!-- PERINGATAN: LAPORAN TELAH DIISI PADA TARIKH INI -->
       <div id="alreadyFilledAlert" class="hidden bg-amber-500/10 border-2 border-amber-500 p-4 rounded-2xl shadow-md transition-all">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-start gap-3">
@@ -88,7 +91,7 @@
               <p class="text-xs text-slate-600 mt-0.5">
                 <i class="fa-solid fa-user-pen mr-1 text-amber-600"></i> Nama Pengisi: <b id="alertSubmitterText" class="text-slate-900 font-bold"></b> 
                 <span class="mx-1 text-slate-300">|</span> 
-                <i class="fa-regular fa-clock mr-1 text-amber-600"></i> Masa Diisi / Kemaskini: <span id="alertTimeText" class="font-medium"></span>
+                <i class="fa-regular fa-clock mr-1 text-amber-600"></i> Terakhir Dikemaskini: <span id="alertTimeText" class="font-medium"></span>
               </p>
             </div>
           </div>
@@ -103,7 +106,7 @@
         </div>
       </div>
 
-      <!-- KAD JADUAL SEMASA (DILETAKKAN DI ATAS BORANG) -->
+      <!-- KAD JADUAL SEMASA (DI ATAS SEKALI) -->
       <div class="bg-gradient-to-r from-emerald-800 to-teal-700 text-white p-5 rounded-2xl shadow-lg">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-600 pb-4 mb-4">
           <div>
@@ -116,7 +119,6 @@
           <div class="flex items-center gap-2">
             <label class="text-xs font-medium text-emerald-200">Pilih Jadual Minggu:</label>
             <select id="selectMingguJadual" onchange="onWeekSelectionChanged()" class="bg-white text-slate-800 text-sm font-semibold rounded-lg px-3 py-2 border-0 shadow">
-              <!-- Dijana secara dinamik -->
             </select>
           </div>
         </div>
@@ -130,16 +132,16 @@
       <!-- STATUS BAR MOD KEMASKINI & URL LAPORAN -->
       <div id="updateStatusBar" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm">
         <div>
-          <span class="bg-amber-200 text-amber-900 text-xs px-2.5 py-1 rounded font-bold uppercase"><i class="fa-solid fa-arrows-rotate mr-1"></i> Sedang Mengemaskini</span>
+          <span class="bg-amber-200 text-amber-900 text-xs px-2.5 py-1 rounded font-bold uppercase"><i class="fa-solid fa-arrows-rotate mr-1"></i> Mod Kemaskini</span>
           <span id="activeReportIdDisplay" class="font-mono text-sm font-bold text-slate-800 ml-2"></span>
           <p id="lastUpdatedDisplay" class="text-xs text-slate-600 mt-1"></p>
         </div>
         <div class="flex items-center gap-2">
           <button type="button" onclick="copyCurrentUrl()" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-100 shadow-sm">
-            <i class="fa-solid fa-link mr-1"></i> Salin URL Laporan Ini
+            <i class="fa-solid fa-link mr-1"></i> Salin URL
           </button>
           <button type="button" onclick="resetFormToNew()" class="px-3 py-1.5 bg-slate-700 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 shadow-sm">
-            <i class="fa-solid fa-plus mr-1"></i> Cipta Laporan Baharu
+            <i class="fa-solid fa-plus mr-1"></i> Laporan Baharu
           </button>
         </div>
       </div>
@@ -169,7 +171,10 @@
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-600 uppercase">Kehadiran Guru</label>
-              <input type="text" id="formKehadiranGuru" placeholder="Cth: 46 / 48" class="w-full mt-1 px-3 py-2 bg-white border rounded-lg text-sm font-medium text-slate-800">
+              <div class="relative">
+                <input type="text" id="formKehadiranGuru" placeholder="Cth: 24 / 26" class="w-full mt-1 px-3 py-2 bg-white border rounded-lg text-sm font-bold text-emerald-700">
+                <span class="absolute right-2 top-3 text-[10px] text-slate-400 font-normal">Auto-Kira</span>
+              </div>
             </div>
           </div>
         </div>
@@ -178,12 +183,12 @@
         <div>
           <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-3">1. GURU BERTUGAS</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="inputGuruBertugasContainer">
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">1.</span><input type="text" id="gb_1" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">4.</span><input type="text" id="gb_4" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">2.</span><input type="text" id="gb_2" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">5.</span><input type="text" id="gb_5" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">3.</span><input type="text" id="gb_3" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
-            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">6.</span><input type="text" id="gb_6" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">1.</span><input type="text" id="gb_1" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">4.</span><input type="text" id="gb_4" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">2.</span><input type="text" id="gb_2" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">5.</span><input type="text" id="gb_5" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">3.</span><input type="text" id="gb_3" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
+            <div class="flex items-center gap-2"><span class="w-6 text-xs font-bold text-slate-500">6.</span><input type="text" id="gb_6" list="listGuruAutocomplete" class="w-full px-3 py-1.5 border rounded-lg text-sm"></div>
           </div>
         </div>
 
@@ -215,12 +220,15 @@
           </div>
         </div>
 
-        <!-- 3. GURU TIDAK HADIR -->
+        <!-- 3. GURU TIDAK HADIR (DENGAN DROPDOWN NAMA GURU & SEBAB) -->
         <div>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg">3. GURU TIDAK HADIR</h3>
+            <div>
+              <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg inline-block">3. GURU TIDAK HADIR</h3>
+              <span class="text-xs text-slate-500 ml-2">Pilih nama guru dan sebab tidak hadir</span>
+            </div>
             <button type="button" onclick="addAbsentTeacherRow()" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md hover:bg-emerald-200">
-              <i class="fa-solid fa-plus mr-1"></i> Tambah Baris
+              <i class="fa-solid fa-plus mr-1"></i> Tambah Guru Tidak Hadir
             </button>
           </div>
           <div class="overflow-x-auto">
@@ -228,8 +236,8 @@
               <thead class="bg-slate-100 uppercase font-bold text-slate-700">
                 <tr>
                   <th class="p-2 w-12 text-center">BIL</th>
-                  <th class="p-2">NAMA GURU</th>
-                  <th class="p-2">SEBAB</th>
+                  <th class="p-2">NAMA GURU (PILIH DROPDOWN)</th>
+                  <th class="p-2">SEBAB TIDAK HADIR</th>
                   <th class="p-2 w-10 text-center">PADAM</th>
                 </tr>
               </thead>
@@ -413,7 +421,7 @@
               </button>
             </div>
             <canvas id="canvasGuru" width="380" height="130" class="signature-pad w-full"></canvas>
-            <input type="text" id="namaGuruTandatangan" placeholder="Nama Guru Bertugas Menyedia" class="w-full mt-2 px-3 py-1.5 border rounded-lg text-xs bg-white">
+            <input type="text" id="namaGuruTandatangan" list="listGuruAutocomplete" placeholder="Nama Guru Bertugas Menyedia" class="w-full mt-2 px-3 py-1.5 border rounded-lg text-xs bg-white">
           </div>
 
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -424,7 +432,7 @@
               </button>
             </div>
             <canvas id="canvasPentadbir" width="380" height="130" class="signature-pad w-full"></canvas>
-            <input type="text" id="namaPentadbirTandatangan" placeholder="Nama Pengetua / Guru Penolong Kanan" class="w-full mt-2 px-3 py-1.5 border rounded-lg text-xs bg-white">
+            <input type="text" id="namaPentadbirTandatangan" list="listGuruAutocomplete" placeholder="Nama Pengetua / Guru Penolong Kanan" class="w-full mt-2 px-3 py-1.5 border rounded-lg text-xs bg-white">
           </div>
         </div>
 
@@ -442,9 +450,7 @@
       </form>
     </div>
 
-    <!-- ======================================================== -->
-    <!--                   PAGE 2: DASHBOARD                      -->
-    <!-- ======================================================== -->
+    <!-- ================= PAGE 2: DASHBOARD ================= -->
     <div id="page-dashboard" class="hidden space-y-6">
       
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -464,9 +470,9 @@
           <span class="text-[11px] text-slate-500 font-medium">Orang Setiap Hari</span>
         </div>
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <p class="text-xs font-semibold text-slate-500 uppercase">Status Sistem</p>
-          <h3 class="text-2xl font-black text-teal-700 mt-1">Aktif</h3>
-          <span class="text-[11px] text-emerald-600 font-medium">Google Sheet Terhubung</span>
+          <p class="text-xs font-semibold text-slate-500 uppercase">Jumlah Guru Berdaftar</p>
+          <h3 id="statTotalTeachers" class="text-2xl font-black text-teal-700 mt-1">26</h3>
+          <span class="text-[11px] text-teal-600 font-medium">Pengkalan Data Sheet</span>
         </div>
       </div>
 
@@ -509,9 +515,7 @@
 
     </div>
 
-    <!-- ======================================================== -->
-    <!--                   PAGE 3: CETAKAN                        -->
-    <!-- ======================================================== -->
+    <!-- ================= PAGE 3: CETAKAN ================= -->
     <div id="page-cetakan" class="hidden space-y-6">
       
       <div class="no-print bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-3">
@@ -744,11 +748,102 @@
 
   </div>
 
-  <!-- ======================================================== -->
-  <!--               SKRIP JAVASCRIPT APLIKASI                  -->
-  <!-- ======================================================== -->
+  <!-- ================= MODAL ADMIN URUS SENARAI GURU ================= -->
+  <div id="adminModal" class="no-print fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-200">
+      
+      <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
+        <h3 class="font-bold text-sm flex items-center gap-2">
+          <i class="fa-solid fa-user-shield text-amber-400"></i> Pengurusan Senarai Guru (Admin)
+        </h3>
+        <button type="button" onclick="closeAdminModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Bahagian 1: Pengesahan Kata Laluan -->
+      <div id="adminLoginSection" class="p-6 space-y-4">
+        <p class="text-xs text-slate-600">Sila masukkan kata laluan admin untuk mengemaskini senarai guru.</p>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Kata Laluan Admin</label>
+          <input type="password" id="adminPasswordInput" placeholder="Masukkan kata laluan..." class="w-full px-3 py-2 border rounded-xl text-sm">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeAdminModal()" class="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600">Batal</button>
+          <button type="button" onclick="verifyAdminPassword()" id="btnAdminLogin" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">
+            Sahkan
+          </button>
+        </div>
+      </div>
+
+      <!-- Bahagian 2: Senarai Guru & Kemaskini -->
+      <div id="adminManageSection" class="hidden p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-700">Senarai Guru Aktif:</span>
+          <span id="adminTeacherCountBadge" class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">0 Guru</span>
+        </div>
+
+        <div class="flex gap-2">
+          <input type="text" id="newTeacherInput" placeholder="Nama Guru Baharu..." class="w-full px-3 py-2 border rounded-xl text-xs uppercase">
+          <button type="button" onclick="addNewTeacherFromAdmin()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold whitespace-nowrap">
+            + Tambah
+          </button>
+        </div>
+
+        <div id="adminTeacherListContainer" class="max-h-60 overflow-y-auto space-y-1.5 border rounded-xl p-2 bg-slate-50">
+          <!-- Item guru -->
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeAdminModal()" class="px-4 py-2 border rounded-xl text-xs font-semibold text-slate-600">Tutup</button>
+          <button type="button" onclick="saveUpdatedTeachersToSheet()" id="btnSaveAdminTeachers" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Sheet
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= SKRIP JAVASCRIPT APLIKASI ================= -->
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYvyphCIscCZR9p2on3ukNTyITiRj4DLLJp3sAFc72nKcpAXQRWU23RzR2Rs72Q7krZA/exec";
+
+    // 26 Senarai Guru Asal Berdasarkan Dokumen
+    let currentTeachersList = [
+      "ABD HADI B ADMAN",
+      "JESSICA CHAN LAI PENG",
+      "LAVANYA A/P VEJAYAN",
+      "MASNON BIN AMAT",
+      "MOHD NIZAM BIN SUBANI",
+      "MOHD RIDUWAN BIN MOHD YASAN",
+      "MUHAMMAD AMIRUL AIMAN BIN ZAKARIA",
+      "MUHAMMAD SYADZA BIN YUSOF",
+      "NORFAIZAH BINTI ISMAIL",
+      "NORHAMIZAH BINTI SHAFIE",
+      "NORHAYATI BT MD. ZAIN",
+      "NORIHAN BINTI YUSOF",
+      "NORUL HAFIDZAH BINTI HASSAN",
+      "NUR AINA NAJWA BINTI MOHD NOR",
+      "NUR FATIN NAZIRAH BINTI RASHIDI",
+      "NURUL HAMIZAH BINTI MD SAID",
+      "OSKASMAZILA BINTI OSMAN",
+      "ROHANA BINTI JASMIN",
+      "SITI HANIZA BINTI IMRAN",
+      "SITI NUR HAKIMAH BINTI MOHD NOOR",
+      "TAMILVANI A/P KRISHNAN",
+      "TAN BEE KEAN",
+      "TANTY BTE RAMLI",
+      "ZAIMAH BINTI SAMAD",
+      "ZAINAL B MOHD ZABIR",
+      "MOHAMAAD FADZELI BIN AZAM"
+    ];
+
+    const REASONS_LIST = [
+      "Cuti/CRK/CTR",
+      "MC",
+      "Bertugas Rasmi Di Luar"
+    ];
 
     const JADUAL_2026 = [
       { minggu: "MINGGU 23", tarikhStr: "06.07.2026 hingga 10.07.2026", startDate: "2026-07-06", endDate: "2026-07-10", guru: ["Cikgu Tanty binti Ramli (K)", "Cikgu Muhammad Syadza bin Yusof", "Cikgu Siti Nur Hakimah binti Mohd Noor"], gkmp: "Cikgu Mohd Riduwan bin Mohd Yasan (GKMP Sains dan Matematik)" },
@@ -788,12 +883,14 @@
     let currentEditReportId = null;
     let existingReportFoundForDate = null;
     let compressedPhotos = [];
+    let authenticatedAdminPassword = "";
 
     window.addEventListener("DOMContentLoaded", () => {
       initJadualDropdown();
       initMonitoringTable();
       initDefaultTables();
       initSignaturePads();
+      updateTeacherDatalist();
 
       const urlParams = new URLSearchParams(window.location.search);
       const page = urlParams.get("page") || "pelaporan";
@@ -841,9 +938,72 @@
       if (pageId === "dashboard") renderDashboardTable();
     }
 
-    // ========================================================
-    //  SEMAKAN LAPORAN TELAH DIISI PADA TARIKH TERPILIH
-    // ========================================================
+    // ==========================================
+    //  PENGISIAN KEHADIRAN & AUTO-CALCULATE
+    // ==========================================
+    function updateTeacherDatalist() {
+      const dl = document.getElementById("listGuruAutocomplete");
+      dl.innerHTML = "";
+      currentTeachersList.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        dl.appendChild(opt);
+      });
+      document.getElementById("statTotalTeachers").textContent = currentTeachersList.length;
+    }
+
+    function calculateAttendanceAutomatically() {
+      const totalTeachers = currentTeachersList.length;
+      let absentCount = 0;
+      document.querySelectorAll("#tbodyAbsentTeachers tr").forEach(tr => {
+        const val = tr.querySelector(".abs-name")?.value;
+        if (val && val.trim() !== "") absentCount++;
+      });
+      const present = Math.max(0, totalTeachers - absentCount);
+      document.getElementById("formKehadiranGuru").value = `${present} / ${totalTeachers}`;
+    }
+
+    function addAbsentTeacherRow(selectedTeacher = "", selectedReason = "") {
+      const tbody = document.getElementById("tbodyAbsentTeachers");
+      const count = tbody.children.length + 1;
+      const tr = document.createElement("tr");
+
+      // Bina Pilihan Dropdown Guru
+      let teacherOptions = `<option value="">-- Pilih Nama Guru --</option>`;
+      currentTeachersList.forEach(t => {
+        const isSel = (t === selectedTeacher) ? "selected" : "";
+        teacherOptions += `<option value="${t}" ${isSel}>${t}</option>`;
+      });
+
+      // Bina Pilihan Dropdown Sebab
+      let reasonOptions = `<option value="">-- Pilih Sebab --</option>`;
+      REASONS_LIST.forEach(r => {
+        const isSel = (r === selectedReason) ? "selected" : "";
+        reasonOptions += `<option value="${r}" ${isSel}>${r}</option>`;
+      });
+
+      tr.innerHTML = `
+        <td class="p-2 text-center font-bold text-slate-500">${count}</td>
+        <td class="p-2">
+          <select onchange="calculateAttendanceAutomatically()" class="w-full px-2 py-1.5 border rounded-lg text-xs font-semibold bg-white abs-name">
+            ${teacherOptions}
+          </select>
+        </td>
+        <td class="p-2">
+          <select class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white abs-reason">
+            ${reasonOptions}
+          </select>
+        </td>
+        <td class="p-2 text-center">
+          <button type="button" onclick="this.closest('tr').remove(); calculateAttendanceAutomatically();" class="text-rose-500 hover:text-rose-700">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+      calculateAttendanceAutomatically();
+    }
+
     function onDateInputChanged(selectedDate) {
       autoFillDay(selectedDate);
       checkIfReportExistsForDate(selectedDate);
@@ -857,14 +1017,10 @@
         return;
       }
 
-      // Cari rekod mengikut tarikh (yyyy-mm-dd)
       const found = allReports.find(r => String(r.Tarikh).trim() === String(dateStr).trim());
 
-      // Jika ada laporan DAN pengguna belum lagi berada dalam mod edit laporan tersebut
       if (found && currentEditReportId !== found.ID) {
         existingReportFoundForDate = found;
-        
-        // Dapatkan nama pengisi
         let submitterName = found.Nama_Pengisi;
         if (!submitterName) {
           let gList = [];
@@ -876,7 +1032,6 @@
         document.getElementById("alertDateText").textContent = `${found.Tarikh} (${found.Hari || ''})`;
         document.getElementById("alertSubmitterText").textContent = submitterName;
         document.getElementById("alertTimeText").textContent = found.Tarikh_Kemaskini || found.Tarikh_Dicipta || "-";
-        
         alertBox.classList.remove("hidden");
       } else {
         alertBox.classList.add("hidden");
@@ -885,20 +1040,16 @@
     }
 
     function editExistingReportFromAlert() {
-      if (existingReportFoundForDate) {
-        loadReportForEdit(existingReportFoundForDate.ID);
-      }
+      if (existingReportFoundForDate) loadReportForEdit(existingReportFoundForDate.ID);
     }
 
     function printExistingReportFromAlert() {
-      if (existingReportFoundForDate) {
-        loadReportForPrint(existingReportFoundForDate.ID);
-      }
+      if (existingReportFoundForDate) loadReportForPrint(existingReportFoundForDate.ID);
     }
 
-    // ========================================================
-    //  JADUAL BERTUGAS DARI PDF
-    // ========================================================
+    // ==========================================
+    //  JADUAL GURU BERTUGAS 2026
+    // ==========================================
     function initJadualDropdown() {
       const select = document.getElementById("selectMingguJadual");
       select.innerHTML = "";
@@ -972,22 +1123,10 @@
     }
 
     function initDefaultTables() {
-      for (let i = 0; i < 3; i++) addAbsentTeacherRow();
+      for (let i = 0; i < 2; i++) addAbsentTeacherRow();
       for (let i = 0; i < 2; i++) addVisitorRow();
       for (let i = 0; i < 2; i++) addActivityRow();
-    }
-
-    function addAbsentTeacherRow(nama = "", sebab = "") {
-      const tbody = document.getElementById("tbodyAbsentTeachers");
-      const count = tbody.children.length + 1;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="p-2 text-center font-bold text-slate-500">${count}</td>
-        <td class="p-2"><input type="text" value="${nama}" placeholder="Nama Guru" class="w-full px-2 py-1 border rounded text-xs abs-name"></td>
-        <td class="p-2"><input type="text" value="${sebab}" placeholder="Cuti Rehat / Mesyuarat / Kursus" class="w-full px-2 py-1 border rounded text-xs abs-reason"></td>
-        <td class="p-2 text-center"><button type="button" onclick="this.closest('tr').remove()" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button></td>
-      `;
-      tbody.appendChild(tr);
+      calculateAttendanceAutomatically();
     }
 
     function addVisitorRow(nama = "", urusan = "") {
@@ -1016,9 +1155,9 @@
       tbody.appendChild(tr);
     }
 
-    // ========================================================
-    //  KOMPRESI GAMBAR AUTOMATIK (KAMERA & GALERI)
-    // ========================================================
+    // ==========================================
+    //  MAMPATAN GAMBAR AUTO
+    // ==========================================
     async function handleImageSelection(e) {
       const files = Array.from(e.target.files);
       if (!files.length) return;
@@ -1086,7 +1225,6 @@
 
       compressedPhotos.forEach((src, idx) => {
         const sizeInKb = Math.round((src.length * 3 / 4) / 1024);
-
         const div = document.createElement("div");
         div.className = "relative rounded-xl overflow-hidden border border-slate-300 shadow-sm bg-slate-900 group aspect-video";
         div.innerHTML = `
@@ -1108,9 +1246,9 @@
       showToast("Gambar dipadam.", "info");
     }
 
-    // ========================================================
+    // ==========================================
     //  TANDATANGAN CANVAS
-    // ========================================================
+    // ==========================================
     const pads = {};
 
     function initSignaturePads() {
@@ -1183,9 +1321,9 @@
       img.onload = () => pad.ctx.drawImage(img, 0, 0);
     }
 
-    // ========================================================
+    // ==========================================
     //  HANTAR & SIMPAN BORANG
-    // ========================================================
+    // ==========================================
     async function handleFormSubmit(e) {
       e.preventDefault();
       const submitBtn = document.getElementById("btnSubmitForm");
@@ -1282,8 +1420,6 @@
 
           const nowStr = result.masaKemaskini || new Date().toLocaleString("ms-MY");
           showUpdateBar(result.id, nowStr);
-
-          // Sembunyikan alert amaran kerana pengguna kini berada dalam mod kemaskini
           document.getElementById("alreadyFilledAlert").classList.add("hidden");
 
           history.pushState(null, "", `?page=pelaporan&id=${result.id}`);
@@ -1324,6 +1460,10 @@
       autoFillDay(today);
       checkIfReportExistsForDate(today);
 
+      document.getElementById("tbodyAbsentTeachers").innerHTML = "";
+      for (let i = 0; i < 2; i++) addAbsentTeacherRow();
+      calculateAttendanceAutomatically();
+
       history.pushState(null, "", "?page=pelaporan");
       showToast("Borang diset semula untuk laporan baharu.", "info");
     }
@@ -1334,6 +1474,10 @@
         const json = await res.json();
         if (json.status === "success") {
           allReports = json.data;
+          if (json.teachers && Array.isArray(json.teachers)) {
+            currentTeachersList = json.teachers;
+            updateTeacherDatalist();
+          }
           updateDashboardStats();
           renderDashboardTable();
           populatePrintSelect();
@@ -1351,6 +1495,7 @@
       const totalLate = allReports.reduce((sum, r) => sum + (Number(r.Murid_Lewat) || 0), 0);
       const avgLate = allReports.length ? (totalLate / allReports.length).toFixed(1) : 0;
       document.getElementById("statAvgLate").textContent = avgLate;
+      document.getElementById("statTotalTeachers").textContent = currentTeachersList.length;
     }
 
     function renderDashboardTable() {
@@ -1699,6 +1844,136 @@
       }`;
       t.classList.remove("hidden");
       setTimeout(() => t.classList.add("hidden"), 3500);
+    }
+
+    // ==========================================
+    //  MODAL PENGURUSAN GURU OLEH ADMIN
+    // ==========================================
+    function openAdminModal() {
+      document.getElementById("adminModal").classList.remove("hidden");
+      if (!authenticatedAdminPassword) {
+        document.getElementById("adminLoginSection").classList.remove("hidden");
+        document.getElementById("adminManageSection").classList.add("hidden");
+        document.getElementById("adminPasswordInput").value = "";
+      } else {
+        renderAdminTeacherList();
+      }
+    }
+
+    function closeAdminModal() {
+      document.getElementById("adminModal").classList.add("hidden");
+    }
+
+    async function verifyAdminPassword() {
+      const pass = document.getElementById("adminPasswordInput").value.trim();
+      if (!pass) {
+        showToast("Sila masukkan kata laluan!", "error");
+        return;
+      }
+
+      const btn = document.getElementById("btnAdminLogin");
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa...`;
+
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "verifyAdmin", password: pass })
+        });
+        const json = await res.json();
+
+        if (json.status === "success") {
+          authenticatedAdminPassword = pass;
+          document.getElementById("adminLoginSection").classList.add("hidden");
+          document.getElementById("adminManageSection").classList.remove("hidden");
+          renderAdminTeacherList();
+          showToast("Akses admin dibenarkan.", "success");
+        } else {
+          showToast("Kata laluan admin salah!", "error");
+        }
+      } catch (e) {
+        showToast("Ralat menyemak kata laluan.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "Sahkan";
+      }
+    }
+
+    function renderAdminTeacherList() {
+      const container = document.getElementById("adminTeacherListContainer");
+      container.innerHTML = "";
+      document.getElementById("adminTeacherCountBadge").textContent = `${currentTeachersList.length} Guru`;
+
+      currentTeachersList.forEach((t, idx) => {
+        const div = document.createElement("div");
+        div.className = "flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200 text-xs";
+        div.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-400 w-5">${idx + 1}.</span>
+            <span class="font-semibold text-slate-800">${t}</span>
+          </div>
+          <button type="button" onclick="deleteTeacherByAdmin(${idx})" class="text-rose-500 hover:text-rose-700 px-2 py-1">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function addNewTeacherFromAdmin() {
+      const input = document.getElementById("newTeacherInput");
+      const name = input.value.trim().toUpperCase();
+      if (!name) return;
+
+      if (currentTeachersList.includes(name)) {
+        showToast("Nama guru ini sudah ada dalam senarai!", "error");
+        return;
+      }
+
+      currentTeachersList.push(name);
+      input.value = "";
+      renderAdminTeacherList();
+    }
+
+    function deleteTeacherByAdmin(index) {
+      if (confirm(`Adakah anda pasti mahu memadam "${currentTeachersList[index]}"?`)) {
+        currentTeachersList.splice(index, 1);
+        renderAdminTeacherList();
+      }
+    }
+
+    async function saveUpdatedTeachersToSheet() {
+      const btn = document.getElementById("btnSaveAdminTeachers");
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "updateTeachers",
+            password: authenticatedAdminPassword,
+            teachers: currentTeachersList
+          })
+        });
+        const json = await res.json();
+
+        if (json.status === "success") {
+          showToast("Senarai guru berjaya disimpan ke Google Sheet!", "success");
+          updateTeacherDatalist();
+          calculateAttendanceAutomatically();
+          closeAdminModal();
+        } else {
+          showToast("Ralat: " + json.message, "error");
+        }
+      } catch (e) {
+        showToast("Ralat menyimpan senarai guru.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Sheet`;
+      }
     }
   </script>
 </body>
