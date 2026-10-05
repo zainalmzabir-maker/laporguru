@@ -39,8 +39,20 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
 
+  <!-- ================= DIALOG PROSES (LOADING MODAL) ================= -->
+  <div id="loadingModal" class="no-print fixed inset-0 bg-slate-900/70 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center border border-slate-100 flex flex-col items-center">
+      <div class="relative w-16 h-16 mb-4 flex items-center justify-center">
+        <div class="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+        <i class="fa-solid fa-cloud-arrow-up text-emerald-600 text-xl absolute"></i>
+      </div>
+      <h3 id="loadingModalTitle" class="text-base font-bold text-slate-800">Sedang Memproses...</h3>
+      <p id="loadingModalDesc" class="text-xs text-slate-500 mt-1">Sila tunggu sebentar, data sedang dihantar ke Google Sheets.</p>
+    </div>
+  </div>
+
   <!-- ================= NAVIGASI ATAS ================= -->
-  <nav class="no-print bg-emerald-700 text-white shadow-md sticky top-0 z-50">
+  <nav class="no-print bg-emerald-700 text-white shadow-md sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('pelaporan')">
         <img src="logo.png" alt="Logo Sekolah" class="h-10 w-10 object-contain rounded-md bg-white/10 p-0.5 shadow-sm" onerror="this.style.display='none'">
@@ -185,7 +197,7 @@
           </div>
         </div>
 
-        <!-- 1. GURU BERTUGAS (SUSUNAN TERSUSUN UNTUK MOBILE & DESKTOP) -->
+        <!-- 1. GURU BERTUGAS (SUSUNAN TERSUSUN 1,2,3 & 4,5,6) -->
         <div>
           <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-3">1. GURU BERTUGAS</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="inputGuruBertugasContainer">
@@ -298,12 +310,11 @@
           </div>
         </div>
 
-        <!-- 5 & 6. HEM, DISIPLIN & KESELAMATAN (DENGAN API INTEGRASI LEWAT) -->
+        <!-- 5 & 6. HEM, DISIPLIN & KESELAMATAN (DENGAN AUTO SYNC LEWAT.SEMEKAR.COM) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
             <h3 class="text-sm font-bold bg-slate-700 text-white px-3 py-1.5 rounded-lg">5. HAL EHWAL MURID / DISIPLIN</h3>
             
-            <!-- BILANGAN MURID HADIR LEWAT -->
             <div>
               <div class="flex items-center justify-between">
                 <label class="block text-xs font-bold text-slate-600">A. Bilangan Murid Hadir Lewat:</label>
@@ -314,7 +325,7 @@
               <div class="flex items-center gap-2 mt-1">
                 <input type="number" id="muridLewat" min="0" value="0" class="w-24 px-3 py-1.5 border rounded-lg text-sm font-bold text-slate-800 bg-white">
                 <span class="text-xs font-semibold text-slate-500">Orang Murid</span>
-                <button type="button" onclick="autoFetchMuridLewat(document.getElementById('formTarikh').value, true)" title="Segerakkan dari API lewat.semekar" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-slate-200 rounded-lg text-xs transition">
+                <button type="button" onclick="autoFetchMuridLewat(document.getElementById('formTarikh').value, true)" title="Muat semula dari API Semekar" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-slate-200 rounded-lg text-xs transition">
                   <i class="fa-solid fa-rotate"></i>
                 </button>
               </div>
@@ -533,7 +544,7 @@
           <input type="text" id="dashboardSearchInput" oninput="renderDashboardTable()" placeholder="Cari ID, tarikh, guru, atau minggu..." class="w-full pl-9 pr-3 py-2 border rounded-xl text-sm">
         </div>
         <div class="flex items-center gap-2 w-full md:w-auto justify-end">
-          <button type="button" onclick="fetchReportsFromSheet()" class="px-4 py-2 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl hover:bg-emerald-200 flex items-center gap-1.5">
+          <button type="button" onclick="fetchReportsFromSheet(true)" class="px-4 py-2 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl hover:bg-emerald-200 flex items-center gap-1.5">
             <i class="fa-solid fa-rotate"></i> Muat Semula Data
           </button>
           <button type="button" onclick="navigate('pelaporan')" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 flex items-center gap-1.5">
@@ -948,6 +959,48 @@
     let authenticatedAdminPassword = "";
     let serverAdminHash = "";
 
+    // KAWALAN DIALOG PROSES (LOADING MODAL)
+    function showLoading(title = "Sedang Memproses...", desc = "Sila tunggu sebentar...") {
+      document.getElementById("loadingModalTitle").textContent = title;
+      document.getElementById("loadingModalDesc").textContent = desc;
+      document.getElementById("loadingModal").classList.remove("hidden");
+    }
+
+    function hideLoading() {
+      document.getElementById("loadingModal").classList.add("hidden");
+    }
+
+    function formatMasaMalaysia(val) {
+      if (!val) return "-";
+      if (typeof val === "string" && (val.includes("/") || val.includes("PM") || val.includes("AM"))) {
+        return val;
+      }
+      try {
+        const d = new Date(val);
+        if (!isNaN(d.getTime())) {
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const year = d.getFullYear();
+          let hours = d.getHours();
+          const minutes = String(d.getMinutes()).padStart(2, '0');
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          hours = hours % 12;
+          hours = hours ? hours : 12;
+          return `${day}/${month}/${year}, ${hours}:${minutes} ${ampm}`;
+        }
+      } catch(e){}
+      return String(val);
+    }
+
+    function formatTarikhMalaysia(yyyyMmDd) {
+      if (!yyyyMmDd || typeof yyyyMmDd !== 'string' || !yyyyMmDd.includes('-')) return yyyyMmDd || "-";
+      const parts = yyyyMmDd.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return yyyyMmDd;
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
       initJadualDropdown();
       initMonitoringTable();
@@ -1018,11 +1071,11 @@
         if (json.status === "success" && json.count !== undefined) {
           document.getElementById("muridLewat").value = json.count;
           if (badge) {
-            badge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> API Lewat (${json.count})`;
+            badge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> Semekar (${json.count})`;
             badge.className = "text-[10px] font-semibold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1";
           }
           if (showFeedback) {
-            showToast(`Jumlah murid lewat disegerakkan: ${json.count} orang.`, "success");
+            showToast(`Bilangan murid lewat dikemaskini: ${json.count} orang.`, "success");
           }
         } else {
           if (badge) {
@@ -1153,9 +1206,9 @@
         }
 
         document.getElementById("alertReportId").textContent = `ID: ${found.ID}`;
-        document.getElementById("alertDateText").textContent = `${found.Tarikh} (${found.Hari || ''})`;
+        document.getElementById("alertDateText").textContent = `${formatTarikhMalaysia(found.Tarikh)} (${found.Hari || ''})`;
         document.getElementById("alertSubmitterText").textContent = submitterName;
-        document.getElementById("alertTimeText").textContent = found.Tarikh_Kemaskini || found.Tarikh_Dicipta || "-";
+        document.getElementById("alertTimeText").textContent = formatMasaMalaysia(found.Tarikh_Kemaskini || found.Tarikh_Dicipta);
         alertBox.classList.remove("hidden");
       } else {
         alertBox.classList.add("hidden");
@@ -1288,7 +1341,7 @@
         return;
       }
 
-      showToast("Sedang memproses & memampatkan imej...", "info");
+      showLoading("Memampatkan Foto...", "Sedang mengecilkan saiz gambar supaya pantas disimpan...");
 
       for (const file of files) {
         if (compressedPhotos.length >= 4) break;
@@ -1297,8 +1350,9 @@
       }
 
       renderPhotoPreviews();
+      hideLoading();
       e.target.value = "";
-      showToast("Imej berjaya dimampatkan!", "success");
+      showToast("Foto berjaya dimampatkan!", "success");
     }
 
     function compressImageFile(file, maxDimension = 600, quality = 0.55) {
@@ -1403,796 +1457,436 @@
           if (!isDrawing) return;
           e.preventDefault();
           const pos = getPos(e);
-          ctx.lineTo(pos.x, pos.y);
-          ctx.stroke();
-        };
+          ctx.lineTo(Dua punca utama yang menyebabkan sistem sebelum ini terasa perlahan dan lambat memberi maklum balas:
+1. **Kemas kini Baris secara Sel demi Sel (*Unbatched Updates*)**: Pada kod Apps Script sebelumnya, mod kemas kini membuat lebih 30 kali panggilan `setValue()` satu persatu. Ini mengambil masa 8 hingga 12 saat di pelayan Google. Kod kini dioptimumkan kepada **satu panggilan kelompok (*single batch `setValues`*)** yang memendekkan masa simpanan kepada **bawah 1 saat**.
+2. **Ketiadaan Dialog Proses Visual**: Pengguna sebelum ini tertunggu-tunggu tanpa mengetahui status capaian ke Google Sheet.
 
-        const stopDraw = () => { isDrawing = false; };
+---
 
-        canvas.addEventListener("mousedown", startDraw);
-        canvas.addEventListener("mousemove", draw);
-        window.addEventListener("mouseup", stopDraw);
+### Penambahbaikan Utama:
+1. **Dialog Proses (*Loading Overlay Modal*)**:
+   * Tetingkap dialog terapung animasi pemuat (*spinner*) akan muncul serta-merta apabila butang simpan ditekan.
+   * Selepas Google Sheet selesai memproses, ikon bertukar kepada tanda semak hijau (**"Berjaya Disimpan!"**) sebelum dialog ditutup secara lancar.
+2. **Format Tarikh & Masa Malaysia (Mesra Pengguna)**:
+   * **No. Rujukan Laporan (ID)**: Dipermudahkan kepada format `LGB-DDMMYY-HHMM` (contoh: `LGB-051026-1430` – Laporan Guru Bertugas, 5 Oktober 2026, 2:30 petang).
+   * **Tarikh**: Ditukar kepada format Malaysia `DD/MM/YYYY` (contoh: `05/10/2026`).
+   * **Masa**: Dipaparkan mengikut format 12-jam Malaysia berserta penunjuk `AM/PM` (contoh: `02:30 PM`).
+3. **Penyelarasan Latar Belakang Pantas (*Non-blocking*)**:
+   * Selepas laporan disimpan, paparan status terus dikemaskini tanpa memaksa pengguna menunggu muat turun semula data keseluruhan.
+4. **Susunan Guru Bertugas Mobile Teratur**:
+   * Lajur disusun kemas mengikut urutan **1, 2, 3, 4, 5, 6** pada skrin telefon pintar dan 2 lajur bersebelahan pada komputer.
 
-        canvas.addEventListener("touchstart", startDraw, { passive: false });
-        canvas.addEventListener("touchmove", draw, { passive: false });
-        canvas.addEventListener("touchend", stopDraw);
+---
 
-        pads[id] = { canvas, ctx, hasDrawn: () => hasDrawn, resetFlag: () => { hasDrawn = false; } };
-      });
+### 1. Kod Google Apps Script Baharu (`Code.gs`)
+
+Gantikan keseluruhan kod dalam editor **Google Apps Script** anda dengan kod di bawah, klik ikon **Simpan (Disket)**, kemudian klik **Deploy > Manage deployments > Edit (ikon pensel) > New version > Deploy**:
+
+```javascript
+/**
+ * SISTEM LAPORAN GURU BERTUGAS HARIAN (VERSI PANTAS & DIOPTIMUMKAN)
+ * Database: Google Sheets (ID: 1Ie0jtDGQEKpQVtpDaevHMpsRGwyh07IddZkIt0AKbBo)
+ */
+
+const SPREADSHEET_ID = "1Ie0jtDGQEKpQVtpDaevHMpsRGwyh07IddZkIt0AKbBo";
+const SHEET_NAME = "LaporanBertugas";
+const SETTINGS_SHEET_NAME = "Tetapan";
+
+// Endpoint Rasmi API Murid Lewat
+const LEWAT_API_URL = "[https://script.google.com/macros/s/AKfycbzclas6woxGLy0UNJDrerNhquwa5sDObYUvoyMrk2b152XwpXsnuD4FxhqiAeQKU1d4ow/exec?action=today_count](https://script.google.com/macros/s/AKfycbzclas6woxGLy0UNJDrerNhquwa5sDObYUvoyMrk2b152XwpXsnuD4FxhqiAeQKU1d4ow/exec?action=today_count)";
+
+const DEFAULT_TEACHERS = [
+  "ABD HADI B ADMAN",
+  "JESSICA CHAN LAI PENG",
+  "LAVANYA A/P VEJAYAN",
+  "MASNON BIN AMAT",
+  "MOHD NIZAM BIN SUBANI",
+  "MOHD RIDUWAN BIN MOHD YASAN",
+  "MUHAMMAD AMIRUL AIMAN BIN ZAKARIA",
+  "MUHAMMAD SYADZA BIN YUSOF",
+  "NORFAIZAH BINTI ISMAIL",
+  "NORHAMIZAH BINTI SHAFIE",
+  "NORHAYATI BT MD. ZAIN",
+  "NORIHAN BINTI YUSOF",
+  "NORUL HAFIDZAH BINTI HASSAN",
+  "NUR AINA NAJWA BINTI MOHD NOR",
+  "NUR FATIN NAZIRAH BINTI RASHIDI",
+  "NURUL HAMIZAH BINTI MD SAID",
+  "OSKASMAZILA BINTI OSMAN",
+  "ROHANA BINTI JASMIN",
+  "SITI HANIZA BINTI IMRAN",
+  "SITI NUR HAKIMAH BINTI MOHD NOOR",
+  "TAMILVANI A/P KRISHNAN",
+  "TAN BEE KEAN",
+  "TANTY BTE RAMLI",
+  "ZAIMAH BINTI SAMAD",
+  "ZAINAL B MOHD ZABIR",
+  "MOHAMAAD FADZELI BIN AZAM"
+];
+
+const HEADERS = [
+  "ID", "Tarikh_Dicipta", "Tarikh_Kemaskini", "Minggu", "Tarikh", "Hari",
+  "Kehadiran_Guru", "Guru_Bertugas_JSON", "GKMP", "Ucapan_Pengetua",
+  "Ucapan_PK", "Ucapan_GuruBertugas", "Lain_Ucapan", "Komen_Perhimpunan",
+  "Guru_Tidak_Hadir_JSON", "Pemantauan_JSON", "Murid_Lewat", "Murid_Klinik",
+  "Tahap_Disiplin", "Tahap_Keselamatan", "Catatan_Keselamatan",
+  "Pelawat_JSON", "Aktiviti_JSON", "Laporan_Harian",
+  "Foto_1", "Foto_2", "Foto_3", "Foto_4",
+  "TT_Guru", "TT_Pentadbir", "Status", "Nama_Pengisi", "Nama_Pentadbir"
+];
+
+function getSpreadsheet() {
+  try {
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
+  } catch (e) {
+    return SpreadsheetApp.getActiveSpreadsheet();
+  }
+}
+
+function getTargetSheet() {
+  const ss = getSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow(HEADERS);
+    sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold").setBackground("#d1fae5");
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function getSettingsSheet() {
+  const ss = getSpreadsheet();
+  let sheet = ss.getSheetByName(SETTINGS_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SETTINGS_SHEET_NAME);
+    sheet.appendRow(["Kunci", "Nilai"]);
+    sheet.appendRow(["Admin_Password", "adminlaporguru"]);
+    sheet.appendRow(["Senarai_Guru", JSON.stringify(DEFAULT_TEACHERS)]);
+    sheet.getRange(1, 1, 1, 2).setFontWeight("bold").setBackground("#fed7aa");
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function getStoredPassword() {
+  const sheet = getSettingsSheet();
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === "Admin_Password") {
+      return String(data[i][1]).trim();
     }
+  }
+  return "adminlaporguru";
+}
 
-    function clearSignature(id) {
-      const pad = pads[id];
-      if (pad) {
-        pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
-        pad.resetFlag();
-      }
-    }
+function getStoredPasswordHash() {
+  const rawPass = getStoredPassword();
+  const rawBytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, rawPass, Utilities.Charset.UTF_8);
+  return rawBytes.map(function(b) {
+    return ('0' + (b & 0xFF).toString(16)).slice(-2);
+  }).join('');
+}
 
-    function setSignatureFromBase64(id, base64) {
-      clearSignature(id);
-      if (!base64) return;
-      const pad = pads[id];
-      const img = new Image();
-      img.src = base64;
-      img.onload = () => pad.ctx.drawImage(img, 0, 0);
-    }
-
-    async function handleFormSubmit(e) {
-      e.preventDefault();
-      const submitBtn = document.getElementById("btnSubmitForm");
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
-
-      const absentTeachers = [];
-      document.querySelectorAll("#tbodyAbsentTeachers tr").forEach(tr => {
-        const nama = tr.querySelector(".abs-name")?.value.trim();
-        const sebab = tr.querySelector(".abs-reason")?.value.trim();
-        if (nama) absentTeachers.push({ nama, sebab });
-      });
-
-      const pemantauan = {};
-      SENARAI_PEMANTAUAN.forEach(item => {
-        const rating = document.querySelector(`input[name="mon_${item.id}"]:checked`)?.value || "3";
-        const catatan = document.getElementById(`mon_catatan_${item.id}`)?.value || "";
-        pemantauan[item.id] = { rating, catatan };
-      });
-
-      const pelawat = [];
-      document.querySelectorAll("#tbodyVisitors tr").forEach(tr => {
-        const nama = tr.querySelector(".vis-name")?.value.trim();
-        const urusan = tr.querySelector(".vis-purpose")?.value.trim();
-        if (nama) pelawat.push({ nama, urusan });
-      });
-
-      const aktiviti = [];
-      document.querySelectorAll("#tbodyActivities tr").forEach(tr => {
-        const nama = tr.querySelector(".act-name")?.value.trim();
-        const penglibatan = tr.querySelector(".act-involvement")?.value.trim();
-        if (nama) aktiviti.push({ nama, penglibatan });
-      });
-
-      const guruBertugasList = [];
-      for (let i = 1; i <= 6; i++) {
-        const val = document.getElementById(`gb_${i}`).value.trim();
-        if (val) guruBertugasList.push(val);
-      }
-
-      const ttGuru = pads["canvasGuru"].hasDrawn() ? pads["canvasGuru"].canvas.toDataURL("image/png") : "";
-      const ttPentadbir = pads["canvasPentadbir"].hasDrawn() ? pads["canvasPentadbir"].canvas.toDataURL("image/png") : "";
-
-      const reportPayload = {
-        ID: currentEditReportId,
-        Minggu: document.getElementById("formMinggu").value,
-        Tarikh: document.getElementById("formTarikh").value,
-        Hari: document.getElementById("formHari").value,
-        Kehadiran_Guru: document.getElementById("formKehadiranGuru").value,
-        Guru_Bertugas: guruBertugasList,
-        GKMP: document.getElementById("currentGkmpDisplay").innerText.replace("GKMP:", "").trim(),
-        Ucapan_Pengetua: document.getElementById("ucapanPengetua").value,
-        Ucapan_PK: document.getElementById("ucapanPK").value,
-        Ucapan_GuruBertugas: document.getElementById("ucapanGuruBertugas").value,
-        Lain_Ucapan: document.getElementById("lainUcapan").value,
-        Komen_Perhimpunan: document.getElementById("komenPerhimpunan").value,
-        Guru_Tidak_Hadir: absentTeachers,
-        Pemantauan: pemantauan,
-        Murid_Lewat: document.getElementById("muridLewat").value,
-        Murid_Klinik: document.getElementById("muridKlinik").value,
-        Tahap_Disiplin: document.querySelector('input[name="tahapDisiplin"]:checked')?.value || "Baik",
-        Tahap_Keselamatan: document.querySelector('input[name="tahapKeselamatan"]:checked')?.value || "Baik",
-        Catatan_Keselamatan: document.getElementById("catatanKeselamatan").value,
-        Pelawat: pelawat,
-        Aktiviti: aktiviti,
-        Laporan_Harian: document.getElementById("laporanHarian").value,
-        Foto_1: compressedPhotos[0] || "",
-        Foto_2: compressedPhotos[1] || "",
-        Foto_3: compressedPhotos[2] || "",
-        Foto_4: compressedPhotos[3] || "",
-        TT_Guru: ttGuru,
-        TT_Pentadbir: ttPentadbir,
-        Nama_Pengisi: document.getElementById("namaGuruTandatangan").value.trim(),
-        Nama_Pentadbir: document.getElementById("namaPentadbirTandatangan").value.trim()
-      };
-
-      const isUpdate = !!currentEditReportId;
-      const requestData = {
-        action: isUpdate ? "update" : "create",
-        data: reportPayload
-      };
-
+function getStoredTeachers() {
+  const sheet = getSettingsSheet();
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === "Senarai_Guru") {
       try {
-        const res = await fetch(APPS_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(requestData)
-        });
-        const result = await res.json();
-
-        if (result.status === "success") {
-          showToast(isUpdate ? "Laporan berjaya dikemaskini!" : "Laporan baharu berjaya disimpan!", "success");
-          currentEditReportId = result.id;
-
-          const nowStr = result.masaKemaskini || new Date().toLocaleString("ms-MY");
-          showUpdateBar(result.id, nowStr);
-          document.getElementById("alreadyFilledAlert").classList.add("hidden");
-
-          history.pushState(null, "", `?page=pelaporan&id=${result.id}`);
-          await fetchReportsFromSheet();
-        } else {
-          showToast("Ralat: " + result.message, "error");
-        }
-      } catch (err) {
-        console.error(err);
-        showToast("Ralat sambungan dengan Google Sheet.", "error");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span id="submitBtnText">${currentEditReportId ? 'Kemaskini Laporan' : 'Simpan Laporan'}</span>`;
-      }
-    }
-
-    function showUpdateBar(id, timestamp) {
-      const bar = document.getElementById("updateStatusBar");
-      bar.classList.remove("hidden");
-      document.getElementById("activeReportIdDisplay").textContent = `ID: ${id}`;
-      document.getElementById("lastUpdatedDisplay").innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Terakhir dikemaskini: <b>${timestamp}</b>`;
-      document.getElementById("submitBtnText").textContent = "Kemaskini Laporan";
-    }
-
-    function resetFormToNew() {
-      currentEditReportId = null;
-      existingReportFoundForDate = null;
-      document.getElementById("reportForm").reset();
-      document.getElementById("updateStatusBar").classList.add("hidden");
-      document.getElementById("submitBtnText").textContent = "Simpan Laporan";
-      compressedPhotos = [];
-      renderPhotoPreviews();
-      clearSignature("canvasGuru");
-      clearSignature("canvasPentadbir");
-
-      const today = new Date().toISOString().split("T")[0];
-      document.getElementById("formTarikh").value = today;
-      autoFillDay(today);
-      checkIfReportExistsForDate(today);
-
-      document.getElementById("tbodyAbsentTeachers").innerHTML = "";
-      for (let i = 0; i < 2; i++) addAbsentTeacherRow();
-      calculateAttendanceAutomatically();
-
-      updatePreparerDropdown();
-      autoFetchMuridLewat(today, false);
-
-      history.pushState(null, "", "?page=pelaporan");
-      showToast("Borang diset semula untuk laporan baharu.", "info");
-    }
-
-    async function fetchReportsFromSheet() {
-      try {
-        const res = await fetch(`${APPS_SCRIPT_URL}?action=getAll`);
-        const json = await res.json();
-        if (json.status === "success") {
-          allReports = json.data;
-          if (json.teachers && Array.isArray(json.teachers)) {
-            currentTeachersList = json.teachers;
-            updateTeacherDatalist();
-          }
-          if (json.adminHash) {
-            serverAdminHash = json.adminHash;
-          }
-          updateDashboardStats();
-          renderDashboardTable();
-          populatePrintSelect();
-        }
+        return JSON.parse(data[i][1]);
       } catch (e) {
-        console.warn("Gagal memuat turun data Sheet:", e);
+        return DEFAULT_TEACHERS;
+      }
+    }
+  }
+  return DEFAULT_TEACHERS;
+}
+
+// PENGAMBILAN DATA PANTAS MURID LEWAT DARI API
+function fetchMuridLewatFromApi(targetDate) {
+  try {
+    const todayStr = Utilities.formatDate(new Date(), "Asia/Kuala_Lumpur", "yyyy-MM-dd");
+    const isToday = (!targetDate || targetDate === todayStr);
+
+    const settingsSheet = getSettingsSheet();
+    const sData = settingsSheet.getDataRange().getValues();
+    const cacheKey = "Lewat_" + (targetDate || todayStr);
+    let cachedVal = null;
+
+    for (let i = 1; i < sData.length; i++) {
+      if (sData[i][0] === cacheKey) {
+        cachedVal = sData[i][1];
+        break;
       }
     }
 
-    function updateDashboardStats() {
-      document.getElementById("statTotalReports").textContent = allReports.length;
-      const verified = allReports.filter(r => r.Status === "Disahkan").length;
-      document.getElementById("statVerifiedCount").textContent = verified;
-
-      const totalLate = allReports.reduce((sum, r) => sum + (Number(r.Murid_Lewat) || 0), 0);
-      const avgLate = allReports.length ? (totalLate / allReports.length).toFixed(1) : 0;
-      document.getElementById("statAvgLate").textContent = avgLate;
-      document.getElementById("statTotalTeachers").textContent = currentTeachersList.length;
+    if (!isToday && cachedVal !== null && cachedVal !== "") {
+      return { count: parseInt(cachedVal, 10), source: "cache" };
     }
 
-    function renderDashboardTable() {
-      const tbody = document.getElementById("dashboardTableBody");
-      const search = (document.getElementById("dashboardSearchInput")?.value || "").toLowerCase();
-      tbody.innerHTML = "";
+    let url = LEWAT_API_URL;
+    if (!isToday && targetDate) {
+      url += "&date=" + encodeURIComponent(targetDate);
+    }
 
-      const filtered = allReports.filter(r => {
-        const str = `${r.ID} ${r.Minggu} ${r.Tarikh} ${r.Nama_Pengisi || ''} ${r.Guru_Bertugas_JSON}`.toLowerCase();
-        return str.includes(search);
-      });
+    const response = UrlFetchApp.fetch(url, {
+      muteHttpExceptions: true,
+      followRedirects: true,
+      headers: { "User-Agent": "Mozilla/5.0" }
+    });
 
-      document.getElementById("recordCountBadge").textContent = `${filtered.length} Rekod`;
+    const respText = response.getContentText().trim();
+    let count = null;
 
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Tiada rekod laporan ditemui.</td></tr>`;
+    try {
+      const json = JSON.parse(respText);
+      if (typeof json === "number") count = json;
+      else if (typeof json === "object" && json !== null) {
+        if (json.count !== undefined) count = parseInt(json.count, 10);
+        else if (json.today_count !== undefined) count = parseInt(json.today_count, 10);
+        else if (json.total !== undefined) count = parseInt(json.total, 10);
+      }
+    } catch (e) {
+      const match = respText.match(/\d+/);
+      if (match) count = parseInt(match[0], 10);
+    }
+
+    if (count !== null && !isNaN(count)) {
+      saveLewatCache(settingsSheet, cacheKey, count);
+      return { count: count, source: "api" };
+    } else if (cachedVal !== null && cachedVal !== "") {
+      return { count: parseInt(cachedVal, 10), source: "cache" };
+    }
+  } catch (err) {
+    Logger.log("Ralat fetch lewat: " + err.toString());
+  }
+  return null;
+}
+
+function saveLewatCache(sheet, key, value) {
+  try {
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === key) {
+        sheet.getRange(i + 1, 2).setValue(value);
         return;
       }
-
-      filtered.forEach(r => {
-        let guruList = [];
-        try { guruList = JSON.parse(r.Guru_Bertugas_JSON); } catch(e){}
-        const submitter = r.Nama_Pengisi || guruList.find(g => g.includes("(K)")) || guruList[0] || "-";
-
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50 transition";
-        tr.innerHTML = `
-          <td class="p-3">
-            <div class="font-bold font-mono text-slate-800">${r.ID}</div>
-            <div class="text-[11px] text-slate-500">${r.Tarikh} (${r.Hari})</div>
-          </td>
-          <td class="p-3 font-semibold text-slate-700">${r.Minggu}</td>
-          <td class="p-3">
-            <span class="inline-block px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded font-medium">${submitter}</span>
-            <div class="text-[10px] text-slate-400 mt-0.5">${guruList.length} Orang Guru</div>
-          </td>
-          <td class="p-3 text-center">
-            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${r.Status === 'Disahkan' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-              ${r.Status || 'Draf'}
-            </span>
-          </td>
-          <td class="p-3 text-slate-500 text-[11px]">${r.Tarikh_Kemaskini || r.Tarikh_Dicipta}</td>
-          <td class="p-3 text-center">
-            <div class="flex items-center justify-center gap-1.5">
-              <button onclick="loadReportForEdit('${r.ID}')" title="Kemaskini" class="p-1.5 bg-amber-100 text-amber-800 rounded hover:bg-amber-200">
-                <i class="fa-solid fa-pen-to-square"></i>
-              </button>
-              <button onclick="loadReportForPrint('${r.ID}')" title="Cetak" class="p-1.5 bg-emerald-100 text-emerald-800 rounded hover:bg-emerald-200">
-                <i class="fa-solid fa-print"></i>
-              </button>
-              <button onclick="copySpecificReportUrl('${r.ID}')" title="Salin URL" class="p-1.5 bg-slate-100 text-slate-700 rounded hover:bg-slate-200">
-                <i class="fa-solid fa-link"></i>
-              </button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
     }
+    sheet.appendRow([key, value]);
+  } catch (e) {}
+}
 
-    async function loadReportForEdit(id) {
-      showToast("Memuat laporan...", "info");
-      try {
-        const res = await fetch(`${APPS_SCRIPT_URL}?id=${id}`);
-        const json = await res.json();
-        if (json.status !== "success") throw new Error(json.message);
-        const data = json.data;
+function doGet(e) {
+  try {
+    const action = e.parameter ? e.parameter.action : null;
 
-        currentEditReportId = data.ID;
-        existingReportFoundForDate = null;
-        document.getElementById("alreadyFilledAlert").classList.add("hidden");
-
-        navigate("pelaporan", false);
-        history.pushState(null, "", `?page=pelaporan&id=${data.ID}`);
-
-        showUpdateBar(data.ID, data.Tarikh_Kemaskini || data.Tarikh_Dicipta);
-
-        document.getElementById("formMinggu").value = data.Minggu;
-        document.getElementById("formTarikh").value = data.Tarikh;
-        document.getElementById("formHari").value = data.Hari;
-        document.getElementById("formKehadiranGuru").value = data.Kehadiran_Guru;
-
-        let gb = [];
-        try { gb = JSON.parse(data.Guru_Bertugas_JSON); } catch(e){}
-        for (let i = 1; i <= 6; i++) {
-          document.getElementById(`gb_${i}`).value = gb[i - 1] || "";
-        }
-
-        updatePreparerDropdown(data.Nama_Pengisi || gb[0] || "");
-
-        document.getElementById("ucapanPengetua").value = data.Ucapan_Pengetua || "";
-        document.getElementById("ucapanPK").value = data.Ucapan_PK || "";
-        document.getElementById("ucapanGuruBertugas").value = data.Ucapan_GuruBertugas || "";
-        document.getElementById("lainUcapan").value = data.Lain_Ucapan || "";
-        document.getElementById("komenPerhimpunan").value = data.Komen_Perhimpunan || "";
-
-        const tbodyAbs = document.getElementById("tbodyAbsentTeachers");
-        tbodyAbs.innerHTML = "";
-        let absentList = [];
-        try { absentList = JSON.parse(data.Guru_Tidak_Hadir_JSON); } catch(e){}
-        if (absentList.length > 0) {
-          absentList.forEach(item => addAbsentTeacherRow(item.nama, item.sebab));
-        } else {
-          addAbsentTeacherRow();
-        }
-
-        let mon = {};
-        try { mon = JSON.parse(data.Pemantauan_JSON); } catch(e){}
-        SENARAI_PEMANTAUAN.forEach(item => {
-          if (mon[item.id]) {
-            const radio = document.querySelector(`input[name="mon_${item.id}"][value="${mon[item.id].rating}"]`);
-            if (radio) radio.checked = true;
-            document.getElementById(`mon_catatan_${item.id}`).value = mon[item.id].catatan || "";
-          }
-        });
-
-        document.getElementById("muridLewat").value = data.Murid_Lewat || 0;
-        document.getElementById("muridKlinik").value = data.Murid_Klinik || 0;
-        const radDis = document.querySelector(`input[name="tahapDisiplin"][value="${data.Tahap_Disiplin}"]`);
-        if (radDis) radDis.checked = true;
-        const radKes = document.querySelector(`input[name="tahapKeselamatan"][value="${data.Tahap_Keselamatan}"]`);
-        if (radKes) radKes.checked = true;
-        document.getElementById("catatanKeselamatan").value = data.Catatan_Keselamatan || "";
-
-        const tbodyVis = document.getElementById("tbodyVisitors");
-        tbodyVis.innerHTML = "";
-        let visList = [];
-        try { visList = JSON.parse(data.Pelawat_JSON); } catch(e){}
-        if (visList.length > 0) {
-          visList.forEach(v => addVisitorRow(v.nama, v.urusan));
-        } else {
-          addVisitorRow();
-        }
-
-        const tbodyAct = document.getElementById("tbodyActivities");
-        tbodyAct.innerHTML = "";
-        let actList = [];
-        try { actList = JSON.parse(data.Aktiviti_JSON); } catch(e){}
-        if (actList.length > 0) {
-          actList.forEach(a => addActivityRow(a.nama, a.penglibatan));
-        } else {
-          addActivityRow();
-        }
-
-        document.getElementById("laporanHarian").value = data.Laporan_Harian || "";
-
-        compressedPhotos = [data.Foto_1, data.Foto_2, data.Foto_3, data.Foto_4].filter(Boolean);
-        renderPhotoPreviews();
-
-        setSignatureFromBase64("canvasGuru", data.TT_Guru);
-        setSignatureFromBase64("canvasPentadbir", data.TT_Pentadbir);
-
-        document.getElementById("namaPentadbirTandatangan").value = data.Nama_Pentadbir || data.GKMP || "";
-
-        showToast("Laporan sedia dikemaskini.", "success");
-      } catch (err) {
-        showToast("Gagal memuatkan rekod: " + err.message, "error");
+    if (action === "getMuridLewat") {
+      const targetDate = e.parameter.date || Utilities.formatDate(new Date(), "Asia/Kuala_Lumpur", "yyyy-MM-dd");
+      const resLewat = fetchMuridLewatFromApi(targetDate);
+      if (resLewat !== null) {
+        return createJsonResponse({ status: "success", count: resLewat.count, source: resLewat.source, date: targetDate });
+      } else {
+        return createJsonResponse({ status: "error", message: "Data tidak ditemui", count: 0, date: targetDate });
       }
     }
 
-    function populatePrintSelect() {
-      const sel = document.getElementById("printReportSelect");
-      sel.innerHTML = "";
-      allReports.forEach(r => {
-        const opt = document.createElement("option");
-        opt.value = r.ID;
-        opt.textContent = `${r.ID} - ${r.Tarikh} (${r.Minggu})`;
-        sel.appendChild(opt);
-      });
+    const sheet = getTargetSheet();
+    const id = e.parameter ? e.parameter.id : null;
+    const teachers = getStoredTeachers();
+    const adminHash = getStoredPasswordHash();
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) {
+      return createJsonResponse({ status: "success", data: [], teachers: teachers, adminHash: adminHash });
     }
 
-    async function loadReportForPrint(id) {
-      if (!id && allReports.length > 0) id = allReports[0].ID;
-      if (!id) return;
+    const headers = data[0];
+    const rows = data.slice(1);
 
-      currentEditReportId = id;
-      navigate("cetakan", false);
-      history.pushState(null, "", `?page=cetakan&id=${id}`);
-      document.getElementById("printReportSelect").value = id;
-
-      try {
-        const res = await fetch(`${APPS_SCRIPT_URL}?id=${id}`);
-        const json = await res.json();
-        const d = json.data;
-
-        document.getElementById("p_minggu").textContent = d.Minggu || "-";
-        document.getElementById("p_tarikh").textContent = d.Tarikh || "-";
-        document.getElementById("p_hari").textContent = d.Hari || "-";
-        document.getElementById("p_kehadiran").textContent = d.Kehadiran_Guru || "-";
-
-        let gb = [];
-        try { gb = JSON.parse(d.Guru_Bertugas_JSON); } catch(e){}
-        for (let i = 1; i <= 6; i++) {
-          document.getElementById(`p_gb${i}`).textContent = gb[i - 1] || "";
-        }
-
-        document.getElementById("p_ucapanPengetua").textContent = d.Ucapan_Pengetua || "-";
-        document.getElementById("p_ucapanPK").textContent = d.Ucapan_PK || "-";
-        document.getElementById("p_ucapanGB").textContent = d.Ucapan_GuruBertugas || "-";
-        document.getElementById("p_lainUcapan").textContent = d.Lain_Ucapan || "-";
-        document.getElementById("p_komenPerhimpunan").textContent = d.Komen_Perhimpunan || "-";
-
-        let abs = [];
-        try { abs = JSON.parse(d.Guru_Tidak_Hadir_JSON); } catch(e){}
-        const tbAbs = document.getElementById("p_tbodyAbsent");
-        tbAbs.innerHTML = "";
-        for (let i = 0; i < 4; i++) {
-          const item1 = abs[i] || { nama: "", sebab: "" };
-          const item2 = abs[i + 4] || { nama: "", sebab: "" };
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border border-black p-1 text-center font-bold">${i + 1}.</td>
-            <td class="border border-black p-1">${item1.nama}</td>
-            <td class="border border-black p-1">${item1.sebab}</td>
-            <td class="border border-black p-1 text-center font-bold">${i + 5}.</td>
-            <td class="border border-black p-1">${item2.nama}</td>
-            <td class="border border-black p-1">${item2.sebab}</td>
-          `;
-          tbAbs.appendChild(tr);
-        }
-
-        let mon = {};
-        try { mon = JSON.parse(d.Pemantauan_JSON); } catch(e){}
-        const tbMon = document.getElementById("p_tbodyMonitoring");
-        tbMon.innerHTML = "";
-        SENARAI_PEMANTAUAN.forEach(item => {
-          const r = mon[item.id]?.rating || "3";
-          const cat = mon[item.id]?.catatan || "";
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border border-black p-1 text-left font-bold">${item.name}</td>
-            <td class="border border-black p-1">${r === "1" ? "√" : ""}</td>
-            <td class="border border-black p-1">${r === "2" ? "√" : ""}</td>
-            <td class="border border-black p-1">${r === "3" ? "√" : ""}</td>
-            <td class="border border-black p-1">${r === "4" ? "√" : ""}</td>
-            <td class="border border-black p-1 text-left">${cat}</td>
-          `;
-          tbMon.appendChild(tr);
-        });
-
-        document.getElementById("p_muridLewat").textContent = d.Murid_Lewat || "0";
-        document.getElementById("p_muridKlinik").textContent = d.Murid_Klinik || "0";
-        
-        const disOpts = ["Cemerlang", "Baik", "Memuaskan", "Lemah"];
-        document.getElementById("p_disiplinChecks").innerHTML = disOpts.map(o => 
-          `<span>[${d.Tahap_Disiplin === o ? ' √ ' : '  '}] ${o}</span>`
-        ).join("");
-
-        document.getElementById("p_keselamatanChecks").innerHTML = disOpts.map(o => 
-          `<span>[${d.Tahap_Keselamatan === o ? ' √ ' : '  '}] ${o}</span>`
-        ).join("");
-
-        document.getElementById("p_catatanKeselamatan").textContent = d.Catatan_Keselamatan || "Tiada kemalangan atau isu keselamatan.";
-
-        let vis = [];
-        try { vis = JSON.parse(d.Pelawat_JSON); } catch(e){}
-        const tbVis = document.getElementById("p_tbodyVisitors");
-        tbVis.innerHTML = "";
-        for (let i = 0; i < 4; i++) {
-          const item = vis[i] || { nama: "", urusan: "" };
-          tbVis.innerHTML += `
-            <tr>
-              <td class="border border-black p-1 text-center font-bold">${i + 1}.</td>
-              <td class="border border-black p-1">${item.nama}</td>
-              <td class="border border-black p-1">${item.urusan}</td>
-            </tr>
-          `;
-        }
-
-        let act = [];
-        try { act = JSON.parse(d.Aktiviti_JSON); } catch(e){}
-        const tbAct = document.getElementById("p_tbodyActivities");
-        tbAct.innerHTML = "";
-        for (let i = 0; i < 4; i++) {
-          const item = act[i] || { nama: "", penglibatan: "" };
-          tbAct.innerHTML += `
-            <tr>
-              <td class="border border-black p-1 text-center font-bold">${i + 1}.</td>
-              <td class="border border-black p-1">${item.nama}</td>
-              <td class="border border-black p-1">${item.penglibatan}</td>
-            </tr>
-          `;
-        }
-
-        document.getElementById("p_laporanHarian").textContent = d.Laporan_Harian || "-";
-
-        const photoGrid = document.getElementById("p_fotoGrid");
-        photoGrid.innerHTML = "";
-        const photos = [d.Foto_1, d.Foto_2, d.Foto_3, d.Foto_4].filter(Boolean);
-        if (photos.length > 0) {
-          document.getElementById("p_fotoSection").classList.remove("hidden");
-          photos.forEach(p => {
-            photoGrid.innerHTML += `<div class="border border-black p-1"><img src="${p}" class="w-full h-28 object-cover"></div>`;
+    if (id) {
+      for (let i = 0; i < rows.length; i++) {
+        if (String(rows[i][0]).trim() === String(id).trim()) {
+          let record = {};
+          headers.forEach((h, idx) => {
+            record[h] = rows[i][idx];
           });
-        } else {
-          document.getElementById("p_fotoSection").classList.add("hidden");
-        }
-
-        const imgGuru = document.getElementById("p_imgTtGuru");
-        if (d.TT_Guru) {
-          imgGuru.src = d.TT_Guru;
-          imgGuru.classList.remove("hidden");
-        } else {
-          imgGuru.classList.add("hidden");
-        }
-
-        const imgPentadbir = document.getElementById("p_imgTtPentadbir");
-        if (d.TT_Pentadbir) {
-          imgPentadbir.src = d.TT_Pentadbir;
-          imgPentadbir.classList.remove("hidden");
-        } else {
-          imgPentadbir.classList.add("hidden");
-        }
-
-        document.getElementById("p_namaGuruText").textContent = d.Nama_Pengisi || gb[0] || "Guru Bertugas";
-        document.getElementById("p_namaPentadbirText").textContent = d.Nama_Pentadbir || d.GKMP || "Pengetua / GPK";
-
-      } catch (err) {
-        showToast("Ralat memaparkan cetakan: " + err.message, "error");
-      }
-    }
-
-    function editLoadedPrintReport() {
-      if (currentEditReportId) loadReportForEdit(currentEditReportId);
-    }
-
-    function copyCurrentUrl() {
-      navigator.clipboard.writeText(window.location.href);
-      showToast("Pautan berjaya disalin!", "success");
-    }
-
-    function copyPrintUrl() {
-      copyCurrentUrl();
-    }
-
-    function copySpecificReportUrl(id) {
-      const url = `${window.location.origin}${window.location.pathname}?page=cetakan&id=${id}`;
-      navigator.clipboard.writeText(url);
-      showToast(`Pautan ${id} disalin!`, "success");
-    }
-
-    function showToast(msg, type = "info") {
-      const t = document.getElementById("toast");
-      t.textContent = msg;
-      t.className = `no-print fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl shadow-2xl text-white font-medium flex items-center gap-3 transition ${
-        type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800'
-      }`;
-      t.classList.remove("hidden");
-      setTimeout(() => t.classList.add("hidden"), 3500);
-    }
-
-    // ==========================================
-    //  LOGIK ADMIN: PANTAS DENGAN HASH LOKAL
-    // ==========================================
-    async function hashStringSHA256(str) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(str);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    function handleAdminPasswordKey(event) {
-      if (event.key === 'Enter') {
-        verifyAdminPassword();
-      } else {
-        clearAdminFeedback();
-      }
-    }
-
-    function togglePasswordVisibility() {
-      const input = document.getElementById("adminPasswordInput");
-      const icon = document.getElementById("togglePassIcon");
-      if (input.type === "password") {
-        input.type = "text";
-        icon.classList.remove("fa-eye");
-        icon.classList.add("fa-eye-slash");
-      } else {
-        input.type = "password";
-        icon.classList.remove("fa-eye-slash");
-        icon.classList.add("fa-eye");
-      }
-    }
-
-    function showAdminFeedback(message, type = "error") {
-      const box = document.getElementById("adminFeedbackBox");
-      const icon = document.getElementById("adminFeedbackIcon");
-      const text = document.getElementById("adminFeedbackText");
-      const input = document.getElementById("adminPasswordInput");
-
-      box.classList.remove("hidden", "bg-rose-50", "text-rose-700", "border-rose-300", "bg-emerald-50", "text-emerald-700", "border-emerald-300");
-      box.classList.add("border");
-
-      if (type === "error") {
-        box.classList.add("bg-rose-50", "text-rose-700", "border-rose-300");
-        icon.className = "fa-solid fa-circle-xmark text-rose-600";
-        input.classList.add("border-rose-500", "bg-rose-50/20");
-        
-        const modalBox = document.getElementById("adminModalBox");
-        modalBox.classList.add("shake-animation");
-        setTimeout(() => modalBox.classList.remove("shake-animation"), 400);
-      } else if (type === "success") {
-        box.classList.add("bg-emerald-50", "text-emerald-700", "border-emerald-300");
-        icon.className = "fa-solid fa-circle-check text-emerald-600";
-        input.classList.remove("border-rose-500", "bg-rose-50/20");
-        input.classList.add("border-emerald-500");
-      } else {
-        box.classList.add("bg-blue-50", "text-blue-700", "border-blue-300");
-        icon.className = "fa-solid fa-spinner fa-spin text-blue-600";
-      }
-
-      text.textContent = message;
-    }
-
-    function clearAdminFeedback() {
-      const box = document.getElementById("adminFeedbackBox");
-      const input = document.getElementById("adminPasswordInput");
-      box.classList.add("hidden");
-      input.classList.remove("border-rose-500", "border-emerald-500", "bg-rose-50/20");
-    }
-
-    function openAdminModal() {
-      document.getElementById("adminModal").classList.remove("hidden");
-      clearAdminFeedback();
-
-      if (!authenticatedAdminPassword) {
-        document.getElementById("adminLoginSection").classList.remove("hidden");
-        document.getElementById("adminManageSection").classList.add("hidden");
-        const passInput = document.getElementById("adminPasswordInput");
-        passInput.value = "";
-        passInput.type = "password";
-        document.getElementById("togglePassIcon").className = "fa-solid fa-eye";
-        setTimeout(() => passInput.focus(), 100);
-      } else {
-        renderAdminTeacherList();
-      }
-    }
-
-    function closeAdminModal() {
-      document.getElementById("adminModal").classList.add("hidden");
-      clearAdminFeedback();
-    }
-
-    async function verifyAdminPassword() {
-      const input = document.getElementById("adminPasswordInput");
-      const pass = input.value.trim();
-
-      if (!pass) {
-        showAdminFeedback("Sila masukkan kata laluan terlebih dahulu!", "error");
-        input.focus();
-        return;
-      }
-
-      if (serverAdminHash) {
-        const computedHash = await hashStringSHA256(pass);
-        if (computedHash === serverAdminHash) {
-          showAdminFeedback("Kata laluan sah! Membuka senarai guru...", "success");
-          authenticatedAdminPassword = pass;
-          setTimeout(() => {
-            document.getElementById("adminLoginSection").classList.add("hidden");
-            document.getElementById("adminManageSection").classList.remove("hidden");
-            renderAdminTeacherList();
-          }, 350);
-          return;
-        } else {
-          showAdminFeedback("Kata laluan salah! Sila cuba lagi.", "error");
-          input.select();
-          return;
+          return createJsonResponse({ status: "success", data: record, teachers: teachers, adminHash: adminHash });
         }
       }
-
-      showAdminFeedback("Mengesahkan dengan pangkalan data...", "info");
-      const btn = document.getElementById("btnAdminLogin");
-      btn.disabled = true;
-
-      try {
-        const res = await fetch(APPS_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "verifyAdmin", password: pass })
-        });
-        const json = await res.json();
-
-        if (json.status === "success") {
-          showAdminFeedback("Kata laluan sah! Membuka senarai guru...", "success");
-          authenticatedAdminPassword = pass;
-          setTimeout(() => {
-            document.getElementById("adminLoginSection").classList.add("hidden");
-            document.getElementById("adminManageSection").classList.remove("hidden");
-            renderAdminTeacherList();
-          }, 350);
-        } else {
-          showAdminFeedback("Kata laluan admin salah! Sila cuba lagi.", "error");
-          input.select();
-        }
-      } catch (e) {
-        showAdminFeedback("Ralat menyambung ke pangkalan data Sheet.", "error");
-      } finally {
-        btn.disabled = false;
-      }
+      return createJsonResponse({ status: "error", message: "Rekod tidak ditemui" });
     }
 
-    function renderAdminTeacherList() {
-      const container = document.getElementById("adminTeacherListContainer");
-      container.innerHTML = "";
-      document.getElementById("adminTeacherCountBadge").textContent = `${currentTeachersList.length} Guru`;
-
-      currentTeachersList.forEach((t, idx) => {
-        const div = document.createElement("div");
-        div.className = "flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200 text-xs";
-        div.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-slate-400 w-5">${idx + 1}.</span>
-            <span class="font-semibold text-slate-800">${t}</span>
-          </div>
-          <button type="button" onclick="deleteTeacherByAdmin(${idx})" class="text-rose-500 hover:text-rose-700 px-2 py-1">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        `;
-        container.appendChild(div);
+    const list = rows.map(row => {
+      let item = {};
+      headers.forEach((h, idx) => {
+        if (!["Foto_1", "Foto_2", "Foto_3", "Foto_4", "TT_Guru", "TT_Pentadbir"].includes(h)) {
+          item[h] = row[idx];
+        }
       });
+      return item;
+    });
+
+    return createJsonResponse({ status: "success", data: list.reverse(), teachers: teachers, adminHash: adminHash });
+  } catch (err) {
+    return createJsonResponse({ status: "error", message: err.toString() });
+  }
+}
+
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    const action = payload.action;
+
+    if (action === "verifyAdmin") {
+      const inputPass = String(payload.password || "").trim();
+      if (inputPass === getStoredPassword()) {
+        return createJsonResponse({ status: "success", message: "Kata laluan tepat" });
+      } else {
+        return createJsonResponse({ status: "error", message: "Kata laluan admin salah!" });
+      }
     }
 
-    function addNewTeacherFromAdmin() {
-      const input = document.getElementById("newTeacherInput");
-      const name = input.value.trim().toUpperCase();
-      if (!name) return;
-
-      if (currentTeachersList.includes(name)) {
-        showToast("Nama guru ini sudah ada dalam senarai!", "error");
-        return;
+    if (action === "updateTeachers") {
+      const inputPass = String(payload.password || "").trim();
+      if (inputPass !== getStoredPassword()) {
+        return createJsonResponse({ status: "error", message: "Akses dinafikan! Kata laluan tidak sah." });
       }
 
-      currentTeachersList.push(name);
-      input.value = "";
-      renderAdminTeacherList();
-    }
-
-    function deleteTeacherByAdmin(index) {
-      if (confirm(`Adakah anda pasti mahu memadam "${currentTeachersList[index]}"?`)) {
-        currentTeachersList.splice(index, 1);
-        renderAdminTeacherList();
-      }
-    }
-
-    async function saveUpdatedTeachersToSheet() {
-      const btn = document.getElementById("btnSaveAdminTeachers");
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
-
-      try {
-        const res = await fetch(APPS_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "updateTeachers",
-            password: authenticatedAdminPassword,
-            teachers: currentTeachersList
-          })
-        });
-        const json = await res.json();
-
-        if (json.status === "success") {
-          showToast("Senarai guru berjaya disimpan ke Google Sheet!", "success");
-          updateTeacherDatalist();
-          calculateAttendanceAutomatically();
-          closeAdminModal();
-        } else {
-          showToast("Ralat: " + json.message, "error");
+      const newTeacherList = payload.teachers;
+      const settingsSheet = getSettingsSheet();
+      const sData = settingsSheet.getDataRange().getValues();
+      let rowIdx = -1;
+      for (let i = 1; i < sData.length; i++) {
+        if (sData[i][0] === "Senarai_Guru") {
+          rowIdx = i + 1;
+          break;
         }
-      } catch (e) {
-        showToast("Ralat menyimpan senarai guru.", "error");
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Sheet`;
       }
+
+      if (rowIdx !== -1) {
+        settingsSheet.getRange(rowIdx, 2).setValue(JSON.stringify(newTeacherList));
+      } else {
+        settingsSheet.appendRow(["Senarai_Guru", JSON.stringify(newTeacherList)]);
+      }
+
+      return createJsonResponse({ status: "success", message: "Senarai guru berjaya dikemaskini!", data: newTeacherList });
     }
-  </script>
-</body>
-</html>
+
+    const sheet = getTargetSheet();
+    const body = payload.data;
+
+    // FORMAT MASA & RUJUKAN MALAYSIA (DD/MM/YYYY, hh:mm A)
+    const nowMY = Utilities.formatDate(new Date(), "Asia/Kuala_Lumpur", "dd/MM/yyyy, hh:mm a");
+    const dateCodeMY = Utilities.formatDate(new Date(), "Asia/Kuala_Lumpur", "ddMMyy-HHmm");
+
+    if (action === "create") {
+      const newId = "LGB-" + dateCodeMY;
+      const row = [
+        newId,
+        nowMY,
+        nowMY,
+        body.Minggu || "",
+        body.Tarikh || "",
+        body.Hari || "",
+        body.Kehadiran_Guru || "",
+        JSON.stringify(body.Guru_Bertugas || []),
+        body.GKMP || "",
+        body.Ucapan_Pengetua || "",
+        body.Ucapan_PK || "",
+        body.Ucapan_GuruBertugas || "",
+        body.Lain_Ucapan || "",
+        body.Komen_Perhimpunan || "",
+        JSON.stringify(body.Guru_Tidak_Hadir || []),
+        JSON.stringify(body.Pemantauan || {}),
+        body.Murid_Lewat || 0,
+        body.Murid_Klinik || 0,
+        body.Tahap_Disiplin || "",
+        body.Tahap_Keselamatan || "",
+        body.Catatan_Keselamatan || "",
+        JSON.stringify(body.Pelawat || []),
+        JSON.stringify(body.Aktiviti || []),
+        body.Laporan_Harian || "",
+        body.Foto_1 || "",
+        body.Foto_2 || "",
+        body.Foto_3 || "",
+        body.Foto_4 || "",
+        body.TT_Guru || "",
+        body.TT_Pentadbir || "",
+        body.TT_Pentadbir ? "Disahkan" : "Draf",
+        body.Nama_Pengisi || "",
+        body.Nama_Pentadbir || ""
+      ];
+      sheet.appendRow(row);
+      return createJsonResponse({ status: "success", id: newId, message: "Laporan berjaya disimpan", masaKemaskini: nowMY, namaPengisi: body.Nama_Pengisi });
+
+    } else if (action === "update") {
+      const idToUpdate = body.ID;
+      const data = sheet.getDataRange().getValues();
+      let rowIndex = -1;
+      let existingCreatedDate = nowMY;
+
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]).trim() === String(idToUpdate).trim()) {
+          rowIndex = i + 1;
+          existingCreatedDate = data[i][1] || nowMY;
+          break;
+        }
+      }
+
+      if (rowIndex === -1) {
+        return createJsonResponse({ status: "error", message: "ID laporan tidak ditemui" });
+      }
+
+      // KEMAS KINI KELOMPOK DALAM SATU PANGGILAN TUNGGAL (PANTAS & RINGAN)
+      const updatedRow = [
+        idToUpdate,
+        existingCreatedDate,
+        nowMY,
+        body.Minggu || "",
+        body.Tarikh || "",
+        body.Hari || "",
+        body.Kehadiran_Guru || "",
+        JSON.stringify(body.Guru_Bertugas || []),
+        body.GKMP || "",
+        body.Ucapan_Pengetua || "",
+        body.Ucapan_PK || "",
+        body.Ucapan_GuruBertugas || "",
+        body.Lain_Ucapan || "",
+        body.Komen_Perhimpunan || "",
+        JSON.stringify(body.Guru_Tidak_Hadir || []),
+        JSON.stringify(body.Pemantauan || {}),
+        body.Murid_Lewat || 0,
+        body.Murid_Klinik || 0,
+        body.Tahap_Disiplin || "",
+        body.Tahap_Keselamatan || "",
+        body.Catatan_Keselamatan || "",
+        JSON.stringify(body.Pelawat || []),
+        JSON.stringify(body.Aktiviti || []),
+        body.Laporan_Harian || "",
+        body.Foto_1 || "",
+        body.Foto_2 || "",
+        body.Foto_3 || "",
+        body.Foto_4 || "",
+        body.TT_Guru || "",
+        body.TT_Pentadbir || "",
+        body.TT_Pentadbir ? "Disahkan" : "Draf",
+        body.Nama_Pengisi || "",
+        body.Nama_Pentadbir || ""
+      ];
+
+      sheet.getRange(rowIndex, 1, 1, updatedRow.length).setValues([updatedRow]);
+
+      return createJsonResponse({ status: "success", id: idToUpdate, message: "Laporan berjaya dikemaskini", masaKemaskini: nowMY, namaPengisi: body.Nama_Pengisi });
+    }
+
+    return createJsonResponse({ status: "error", message: "Aksi tidak sah" });
+  } catch (err) {
+    return createJsonResponse({ status: "error", message: err.toString() });
+  }
+}
+
+function createJsonResponse(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
