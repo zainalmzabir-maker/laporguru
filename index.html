@@ -24,7 +24,7 @@
       border-radius: 8px;
       cursor: crosshair;
       touch-action: none;
-      background-color: #f8fafc;
+      background-color: #ffffff;
     }
   </style>
 </head>
@@ -369,14 +369,14 @@
           <div id="fotoPreviewContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
         </div>
 
-        <!-- TANDATANGAN -->
+        <!-- TANDATANGAN CANVAS -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div class="flex justify-between items-center mb-2">
               <label class="text-xs font-bold text-slate-700">TANDATANGAN GURU BERTUGAS:</label>
-              <button type="button" onclick="clearSignature('canvasGuru')" class="text-xs text-rose-600 font-semibold">Padam</button>
+              <button type="button" onclick="clearSignature('canvasGuru')" class="text-xs text-rose-600 font-semibold hover:underline">Padam</button>
             </div>
-            <canvas id="canvasGuru" width="380" height="120" class="signature-pad w-full"></canvas>
+            <canvas id="canvasGuru" width="380" height="120" class="signature-pad w-full shadow-inner"></canvas>
             <div class="mt-2">
               <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Guru Penyedia:</label>
               <select id="namaGuruTandatangan" class="w-full px-3 py-2 border rounded-lg text-xs font-bold text-slate-800 bg-white">
@@ -388,9 +388,9 @@
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div class="flex justify-between items-center mb-2">
               <label class="text-xs font-bold text-slate-700">TANDATANGAN PENTADBIR:</label>
-              <button type="button" onclick="clearSignature('canvasPentadbir')" class="text-xs text-rose-600 font-semibold">Padam</button>
+              <button type="button" onclick="clearSignature('canvasPentadbir')" class="text-xs text-rose-600 font-semibold hover:underline">Padam</button>
             </div>
-            <canvas id="canvasPentadbir" width="380" height="120" class="signature-pad w-full"></canvas>
+            <canvas id="canvasPentadbir" width="380" height="120" class="signature-pad w-full shadow-inner"></canvas>
             <div class="mt-2">
               <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Pengetua / GPK:</label>
               <input type="text" id="namaPentadbirTandatangan" list="listGuruAutocomplete" placeholder="Nama Pentadbir" class="w-full px-3 py-2 border rounded-lg text-xs bg-white">
@@ -399,8 +399,8 @@
         </div>
 
         <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-6 border-t">
-          <button type="button" onclick="resetFormToNew()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-bold">Kosongkan</button>
-          <button type="submit" id="btnSubmitForm" class="w-full sm:w-auto px-8 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold shadow-lg">
+          <button type="button" onclick="resetFormToNew()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-bold hover:bg-slate-100">Kosongkan</button>
+          <button type="submit" id="btnSubmitForm" class="w-full sm:w-auto px-8 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold shadow-lg hover:bg-emerald-700 active:scale-95 transition">
             <span id="submitBtnText">Simpan Laporan</span>
           </button>
         </div>
@@ -460,31 +460,29 @@
       </div>
     </div>
 
-    <!-- ================= PAGE 3: CETAKAN (DIPERTINGKAT DENGAN KUMPULAN BULAN) ================= -->
+    <!-- ================= PAGE 3: CETAKAN (KUMPULAN BULANAN) ================= -->
     <div id="page-cetakan" class="hidden space-y-6">
 
-      <!-- SUB-BAHAGIAN A: SENARAI LAPORAN MENGIKUT BULAN -->
+      <!-- SUB-BAHAGIAN A: SENARAI KELOMPOK BULAN -->
       <div id="printListView" class="space-y-4">
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
             <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
               <i class="fa-solid fa-folder-tree text-emerald-600"></i> Arkib Laporan Guru Bertugas
             </h3>
-            <p class="text-xs text-slate-500 mt-0.5">Laporan dikumpulkan mengikut bulan. Sila klik <b>Papar & Cetak</b> pada laporan yang diingini.</p>
+            <p class="text-xs text-slate-500 mt-0.5">Sila pilih laporan mengikut bulan untuk melihat dan mencetak dokumen rasmi.</p>
           </div>
           <button type="button" onclick="fetchReportsFromSheet(true)" class="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm">
             <i class="fa-solid fa-rotate"></i> Muat Semula Data
           </button>
         </div>
 
-        <!-- KONTENA KUMPULAN BULANAN AKAN DIJANA SECARA DINAMIK DI SINI -->
         <div id="printMonthlyListContainer" class="space-y-4"></div>
       </div>
 
-      <!-- SUB-BAHAGIAN B: PAPARAN DOKUMEN CETAKAN (HANYA DITUNJUKKAN SELEPAS DIPILIH) -->
+      <!-- SUB-BAHAGIAN B: PAPARAN DOKUMEN CETAKAN RASMI -->
       <div id="printDocView" class="hidden space-y-4">
         
-        <!-- BAR KAWALAN CETAKAN -->
         <div class="no-print bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-3">
           <div class="flex items-center gap-2">
             <button type="button" onclick="backToPrintList()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95 shadow-sm">
@@ -499,13 +497,10 @@
             <button type="button" onclick="editLoadedPrintReport()" class="px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 shadow flex items-center gap-2 active:scale-95">
               <i class="fa-solid fa-pen"></i> Kemaskini
             </button>
-            <button type="button" onclick="copyPrintUrl()" class="px-3 py-2 border rounded-xl text-xs font-semibold hover:bg-slate-50 text-slate-700">
-              <i class="fa-solid fa-share-nodes"></i> Salin URL
-            </button>
           </div>
         </div>
 
-        <!-- DOKUMEN CETAKAN RASMI A4 -->
+        <!-- KERTAS CETAKAN A4 -->
         <div id="printableDocument" class="print-container bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-slate-200 text-black leading-tight text-xs">
           <div class="border-2 border-black p-3 mb-4 flex items-center justify-between gap-3">
             <img src="logo.png" alt="Logo" class="h-14 w-14 object-contain flex-shrink-0" onerror="this.style.display='none'">
@@ -619,11 +614,12 @@
             <div id="p_fotoGrid" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
           </div>
 
+          <!-- TANDATANGAN PADA CETAKAN -->
           <div class="mt-8 pt-4 grid grid-cols-2 gap-8 text-[11px]">
             <div>
               <div class="font-bold mb-1">Disediakan oleh,</div>
               <div class="h-20 flex items-center justify-start border-b border-black">
-                <img id="p_imgTtGuru" class="max-h-20 max-w-full object-contain hidden" alt="TT Guru">
+                <img id="p_imgTtGuru" class="max-h-20 max-w-full object-contain hidden" alt="Tandatangan Guru Bertugas">
               </div>
               <div class="mt-1">( <span id="p_namaGuruText" class="font-semibold">......................................................</span> )</div>
               <div class="text-[10px] text-gray-600">Guru Bertugas</div>
@@ -631,7 +627,7 @@
             <div>
               <div class="font-bold mb-1">Disemak oleh,</div>
               <div class="h-20 flex items-center justify-start border-b border-black">
-                <img id="p_imgTtPentadbir" class="max-h-20 max-w-full object-contain hidden" alt="TT Pentadbir">
+                <img id="p_imgTtPentadbir" class="max-h-20 max-w-full object-contain hidden" alt="Tandatangan Pentadbir">
               </div>
               <div class="mt-1">( <span id="p_namaPentadbirText" class="font-semibold">......................................................</span> )</div>
               <div class="text-[10px] text-gray-600">Pengetua / Guru Penolong Kanan</div>
@@ -734,7 +730,6 @@
       return dateString;
     }
 
-    // PENGECAMAN BULAN & TAHUN UNTUK PENGELOMPOKKAN
     function getMonthYearData(dateStr) {
       if (!dateStr) return { label: "Lain-lain", sortKey: "0000-00" };
       let y = "", m = 0;
@@ -763,7 +758,7 @@
       initSignaturePads();
 
       try {
-        const localCached = localStorage.getItem("semekar_cache_v2");
+        const localCached = localStorage.getItem("semekar_cache_v3");
         if (localCached) {
           allReports = JSON.parse(localCached);
           updateDashboardStats();
@@ -816,7 +811,6 @@
 
       if (pageId === "dashboard") renderDashboardTable();
       if (pageId === "cetakan") {
-        // Jika masuk ke tab cetakan tanpa ID spesifik, paparkan senarai bulan
         const urlParams = new URLSearchParams(window.location.search);
         const urlId = urlParams.get("id");
         if (!urlId) {
@@ -827,7 +821,121 @@
     }
 
     // ==========================================
-    // LOGIK MODUL CETAKAN (LIST VS DOKUMEN)
+    // ENJIN MAMPATAN TANDATANGAN (ULTRA-RINGAN ~2.5 KB)
+    // ==========================================
+    function compressSignatureCanvas(canvas) {
+      const ctx = canvas.getContext("2d");
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let hasContent = false;
+      
+      // Semak sama ada pengguna ada membuat lakaran pen
+      for (let i = 3; i < imgData.data.length; i += 4) {
+        if (imgData.data[i] > 20) {
+          hasContent = true;
+          break;
+        }
+      }
+      if (!hasContent) return "";
+
+      // Kecilkan kepada saiz optimum 260px x 82px
+      const targetW = 260;
+      const targetH = Math.round(canvas.height * (targetW / canvas.width));
+
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = targetW;
+      tempCanvas.height = targetH;
+      const tempCtx = tempCanvas.getContext("2d");
+
+      // Isi latar belakang PUTIH BERSIH supaya JPEG tidak menjadi hitam pekat
+      tempCtx.fillStyle = "#ffffff";
+      tempCtx.fillRect(0, 0, targetW, targetH);
+
+      // Salin lakaran tandatangan dengan kualiti jelas
+      tempCtx.drawImage(canvas, 0, 0, targetW, targetH);
+
+      // Eksport sebagai JPEG kualiti 0.55 (Saiz ~2-3 KB sahaja)
+      return tempCanvas.toDataURL("image/jpeg", 0.55);
+    }
+
+    function getSignatureData(canvasId) {
+      const pad = pads[canvasId];
+      if (!pad) return "";
+      if (pad.hasDrawn()) {
+        return compressSignatureCanvas(pad.canvas);
+      }
+      return pad.existingBase64 || "";
+    }
+
+    const pads = {};
+    function initSignaturePads() {
+      ["canvasGuru", "canvasPentadbir"].forEach(id => {
+        const canvas = document.getElementById(id);
+        const ctx = canvas.getContext("2d");
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        let isDrawing = false, hasDrawn = false;
+        let existingBase64 = "";
+
+        const getPos = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+          };
+        };
+
+        const start = (e) => { e.preventDefault(); isDrawing = true; hasDrawn = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+        const move = (e) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+        const stop = () => { isDrawing = false; };
+
+        canvas.addEventListener("mousedown", start);
+        canvas.addEventListener("mousemove", move);
+        window.addEventListener("mouseup", stop);
+        canvas.addEventListener("touchstart", start, { passive: false });
+        canvas.addEventListener("touchmove", move, { passive: false });
+        canvas.addEventListener("touchend", stop);
+
+        pads[id] = {
+          canvas, ctx,
+          hasDrawn: () => hasDrawn,
+          markDrawn: () => { hasDrawn = true; },
+          resetFlag: () => { hasDrawn = false; },
+          existingBase64: ""
+        };
+      });
+    }
+
+    function clearSignature(id) {
+      const pad = pads[id];
+      if (pad) {
+        pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+        pad.resetFlag();
+        pad.existingBase64 = "";
+      }
+    }
+
+    function setSignatureFromBase64(id, base64) {
+      clearSignature(id);
+      const pad = pads[id];
+      if (!pad) return;
+      pad.existingBase64 = base64 || "";
+      if (!base64 || !base64.startsWith("data:image")) return;
+
+      const img = new Image();
+      img.src = base64;
+      img.onload = () => {
+        pad.ctx.drawImage(img, 0, 0, pad.canvas.width, pad.canvas.height);
+        pad.markDrawn();
+      };
+    }
+
+    // ==========================================
+    // LOGIK MODUL CETAKAN (LIST BULANAN & PAPARAN)
     // ==========================================
     function renderPrintMonthlyList() {
       const container = document.getElementById("printMonthlyListContainer");
@@ -844,7 +952,6 @@
         return;
       }
 
-      // 1. Kelompokkan rekod mengikut Bulan & Tahun
       const groups = {};
       allReports.forEach(r => {
         const my = getMonthYearData(r.Tarikh);
@@ -854,7 +961,6 @@
         groups[my.sortKey].reports.push(r);
       });
 
-      // 2. Susun bulan terkini di atas sekali
       const sortedKeys = Object.keys(groups).sort().reverse();
 
       sortedKeys.forEach(sortKey => {
@@ -909,7 +1015,6 @@
       });
     }
 
-    // PILIH LAPORAN DARI SENARAI KELOMPOK
     function selectReportForPrint(id) {
       if (!id) return;
       currentEditReportId = id;
@@ -920,13 +1025,13 @@
 
       history.pushState(null, "", `?page=cetakan&id=${id}`);
 
-      // Render pantas dari memori lokal terlebih dahulu
+      // Papar data dari memori tempatan dahulu
       const localMatch = allReports.find(r => String(r.ID).trim() === String(id).trim());
       if (localMatch) {
         renderPrintDocument(localMatch);
       }
 
-      // Ambil foto dan tandatangan penuh dari server
+      // Ambil data lengkap (termasuk foto & tandatangan) dari Google Sheets
       fetch(`${APPS_SCRIPT_URL}?id=${id}`)
         .then(res => res.json())
         .then(json => {
@@ -937,7 +1042,6 @@
         .catch(err => console.warn("Ralat memuatkan rekod cetakan:", err));
     }
 
-    // KEMBALI KE SENARAI BULANAN
     function backToPrintList(updateUrl = true) {
       document.getElementById("printDocView").classList.add("hidden");
       document.getElementById("printListView").classList.remove("hidden");
@@ -1052,13 +1156,24 @@
         document.getElementById("p_fotoSection").classList.add("hidden");
       }
 
+      // PAPARAN TANDATANGAN GURU & PENTADBIR
       const imgGuru = document.getElementById("p_imgTtGuru");
-      if (d.TT_Guru) { imgGuru.src = d.TT_Guru; imgGuru.classList.remove("hidden"); }
-      else { imgGuru.classList.add("hidden"); }
+      if (d.TT_Guru && String(d.TT_Guru).trim().startsWith("data:image")) {
+        imgGuru.src = d.TT_Guru;
+        imgGuru.classList.remove("hidden");
+      } else {
+        imgGuru.src = "";
+        imgGuru.classList.add("hidden");
+      }
 
       const imgPentadbir = document.getElementById("p_imgTtPentadbir");
-      if (d.TT_Pentadbir) { imgPentadbir.src = d.TT_Pentadbir; imgPentadbir.classList.remove("hidden"); }
-      else { imgPentadbir.classList.add("hidden"); }
+      if (d.TT_Pentadbir && String(d.TT_Pentadbir).trim().startsWith("data:image")) {
+        imgPentadbir.src = d.TT_Pentadbir;
+        imgPentadbir.classList.remove("hidden");
+      } else {
+        imgPentadbir.src = "";
+        imgPentadbir.classList.add("hidden");
+      }
 
       document.getElementById("p_namaGuruText").textContent = d.Nama_Pengisi || gb[0] || "Guru Bertugas";
       document.getElementById("p_namaPentadbirText").textContent = d.Nama_Pentadbir || d.GKMP || "Pengetua / GPK";
@@ -1106,8 +1221,9 @@
         if (val) guruBertugasList.push(val);
       }
 
-      const ttGuru = pads["canvasGuru"].hasDrawn() ? pads["canvasGuru"].canvas.toDataURL("image/jpeg", 0.5) : "";
-      const ttPentadbir = pads["canvasPentadbir"].hasDrawn() ? pads["canvasPentadbir"].canvas.toDataURL("image/jpeg", 0.5) : "";
+      // Ambil tandatangan yang telah dimampatkan (~2.5 KB)
+      const ttGuru = getSignatureData("canvasGuru");
+      const ttPentadbir = getSignatureData("canvasPentadbir");
 
       const reportPayload = {
         ID: currentEditReportId,
@@ -1156,13 +1272,20 @@
           showUpdateBar(result.id, nowStr);
           document.getElementById("alreadyFilledAlert").classList.add("hidden");
 
-          const fullSavedRecord = { ...reportPayload, ID: result.id, Tarikh_Kemaskini: nowStr, Tarikh_Dicipta: nowStr, Status: ttPentadbir ? "Disahkan" : "Draf" };
+          const fullSavedRecord = {
+            ...reportPayload,
+            ID: result.id,
+            Tarikh_Kemaskini: nowStr,
+            Tarikh_Dicipta: nowStr,
+            Status: ttPentadbir ? "Disahkan" : "Draf"
+          };
+          
           const existIdx = allReports.findIndex(r => r.ID === result.id);
           if (existIdx !== -1) allReports[existIdx] = fullSavedRecord;
           else allReports.unshift(fullSavedRecord);
 
           try {
-            localStorage.setItem("semekar_cache_v2", JSON.stringify(allReports));
+            localStorage.setItem("semekar_cache_v3", JSON.stringify(allReports));
           } catch(e) {}
 
           updateDashboardStats();
@@ -1257,6 +1380,7 @@
         compressedPhotos = [data.Foto_1, data.Foto_2, data.Foto_3, data.Foto_4].filter(Boolean);
         renderPhotoPreviews();
 
+        // Muatkan tandatangan sedia ada ke kanvas pad
         setSignatureFromBase64("canvasGuru", data.TT_Guru);
         setSignatureFromBase64("canvasPentadbir", data.TT_Pentadbir);
         document.getElementById("namaPentadbirTandatangan").value = data.Nama_Pentadbir || data.GKMP || "";
@@ -1277,7 +1401,7 @@
         if (json.status === "success") {
           allReports = json.data;
           try {
-            localStorage.setItem("semekar_cache_v2", JSON.stringify(allReports));
+            localStorage.setItem("semekar_cache_v3", JSON.stringify(allReports));
           } catch(e) {}
           if (json.teachers && Array.isArray(json.teachers)) {
             currentTeachersList = json.teachers;
@@ -1476,52 +1600,6 @@
       });
     }
 
-    const pads = {};
-    function initSignaturePads() {
-      ["canvasGuru", "canvasPentadbir"].forEach(id => {
-        const canvas = document.getElementById(id);
-        const ctx = canvas.getContext("2d");
-        ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
-
-        let isDrawing = false, hasDrawn = false;
-        const getPos = (e) => {
-          const rect = canvas.getBoundingClientRect();
-          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-          return { x: (clientX - rect.left) * (canvas.width / rect.width), y: (clientY - rect.top) * (canvas.height / rect.height) };
-        };
-
-        const start = (e) => { e.preventDefault(); isDrawing = true; hasDrawn = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
-        const move = (e) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
-        const stop = () => { isDrawing = false; };
-
-        canvas.addEventListener("mousedown", start);
-        canvas.addEventListener("mousemove", move);
-        window.addEventListener("mouseup", stop);
-        canvas.addEventListener("touchstart", start, { passive: false });
-        canvas.addEventListener("touchmove", move, { passive: false });
-        canvas.addEventListener("touchend", stop);
-
-        pads[id] = { canvas, ctx, hasDrawn: () => hasDrawn, resetFlag: () => { hasDrawn = false; } };
-      });
-    }
-
-    function clearSignature(id) {
-      const pad = pads[id];
-      if (pad) {
-        pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
-        pad.resetFlag();
-      }
-    }
-
-    function setSignatureFromBase64(id, base64) {
-      clearSignature(id);
-      if (!base64) return;
-      const img = new Image();
-      img.src = base64;
-      img.onload = () => pads[id].ctx.drawImage(img, 0, 0);
-    }
-
     async function autoFetchMuridLewat(dateStr, showFeedback = false) {
       const badge = document.getElementById("lewatSyncBadge");
       if (badge) badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-[9px]"></i> Menyemak...`;
@@ -1695,13 +1773,6 @@
       `;
       tbody.appendChild(tr);
     }
-
-    function copyCurrentUrl() {
-      navigator.clipboard.writeText(window.location.href);
-      showToast("Pautan berjaya disalin!", "success");
-    }
-
-    function copyPrintUrl() { copyCurrentUrl(); }
 
     function showToast(msg, type = "info") {
       const t = document.getElementById("toast");
