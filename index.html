@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>e-Laporan Guru Bertugas Harian</title>
 
+  <!-- FAVICON LOGO -->
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
 
@@ -37,26 +38,26 @@
 
   <!-- ================= DIALOG PEMPROSESAN (LOADING OVERLAY) ================= -->
   <div id="processModal" class="no-print fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in duration-200">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 space-y-4">
       <div id="processIconContainer" class="w-16 h-16 mx-auto bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
-        <i class="fa-solid fa-cloud-arrow-up animate-bounce"></i>
+        <i class="fa-solid fa-spinner fa-spin"></i>
       </div>
       <div>
-        <h3 id="processModalTitle" class="text-base font-black text-slate-800 tracking-wide">Menyimpan Laporan...</h3>
-        <p id="processModalDesc" class="text-xs text-slate-500 mt-1">Sila tunggu sebentar sementara rekod disegerakkan ke Google Sheets.</p>
+        <h3 id="processModalTitle" class="text-base font-black text-slate-800 tracking-wide">Memproses...</h3>
+        <p id="processModalDesc" class="text-xs text-slate-500 mt-1">Sila tunggu sebentar sementara rekod dihantar ke Google Sheets.</p>
       </div>
       <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-        <div id="processProgressBar" class="bg-emerald-500 h-2 rounded-full w-3/4 animate-pulse"></div>
+        <div class="bg-emerald-500 h-2 rounded-full w-3/4 animate-pulse"></div>
       </div>
-      <p class="text-[10px] text-slate-400 font-medium italic">Jangan tutup pelayar ini sehingga selesai.</p>
+      <p class="text-[10px] text-slate-400 font-medium italic">Sistem sedang memproses data anda.</p>
     </div>
   </div>
 
-  <!-- ================= NAVIGASI ================= -->
+  <!-- ================= NAVIGASI ATAS ================= -->
   <nav class="no-print bg-emerald-700 text-white shadow-md sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('pelaporan')">
-        <img src="logo.png" alt="Logo" class="h-10 w-10 object-contain rounded-md bg-white/10 p-0.5" onerror="this.style.display='none'">
+        <img src="logo.png" alt="Logo Sekolah" class="h-10 w-10 object-contain rounded-md bg-white/10 p-0.5 shadow-sm" onerror="this.style.display='none'">
         <div>
           <h1 class="font-bold text-lg leading-tight">e-Laporan Guru Bertugas</h1>
           <p class="text-xs text-emerald-200">Sistem Laporan Bertugas Harian Bersepadu</p>
@@ -73,7 +74,7 @@
           <i class="fa-solid fa-print mr-1"></i> Cetakan
         </button>
         <button onclick="openAdminModal()" class="px-3 py-2 rounded-lg text-xs font-bold transition bg-amber-500 hover:bg-amber-600 text-slate-900 shadow ml-2 flex items-center gap-1.5">
-          <i class="fa-solid fa-user-shield"></i> Admin
+          <i class="fa-solid fa-user-shield"></i> Urus Guru (Admin)
         </button>
       </div>
     </div>
@@ -82,8 +83,10 @@
   <!-- NOTIFIKASI TOAST -->
   <div id="toast" class="no-print fixed bottom-5 right-5 z-50 hidden px-5 py-3 rounded-xl shadow-2xl text-white font-medium flex items-center gap-3 transition"></div>
 
+  <!-- AUTOCOMPLETE SENARAI GURU -->
   <datalist id="listGuruAutocomplete"></datalist>
 
+  <!-- ================= KANDUNGAN UTAMA ================= -->
   <div class="max-w-6xl mx-auto p-4 md:p-6">
 
     <!-- ================= PAGE 1: PELAPORAN ================= -->
@@ -124,12 +127,12 @@
         </div>
       </div>
 
-      <!-- KAD JADUAL SEMASA -->
+      <!-- KAD JADUAL SEMASA (2026) -->
       <div class="bg-gradient-to-r from-emerald-800 to-teal-700 text-white p-5 rounded-2xl shadow-lg">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-600 pb-4 mb-4">
           <div>
             <span class="inline-block px-3 py-1 bg-emerald-600/60 border border-emerald-400/40 rounded-full text-xs font-semibold uppercase tracking-wider text-emerald-100">
-              Jadual Bertugas Rasmi 2026
+              Jadual Guru Bertugas Rasmi 2026
             </span>
             <h2 id="currentWeekDisplay" class="text-2xl font-black mt-1">Minggu --</h2>
             <p id="currentGkmpDisplay" class="text-emerald-200 text-sm mt-0.5"><i class="fa-solid fa-user-tie mr-1"></i> GKMP: --</p>
@@ -147,7 +150,7 @@
         </div>
       </div>
 
-      <!-- BAR STATUS MOD KEMASKINI -->
+      <!-- STATUS BAR MOD KEMASKINI -->
       <div id="updateStatusBar" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm">
         <div>
           <span class="bg-amber-200 text-amber-900 text-xs px-2.5 py-1 rounded font-bold uppercase"><i class="fa-solid fa-arrows-rotate mr-1"></i> Mod Kemaskini</span>
@@ -234,6 +237,7 @@
         <!-- 2. PERHIMPUNAN / AKTIVITI PAGI -->
         <div>
           <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-3">2. PERHIMPUNAN / AKTIVITI PAGI</h3>
+          <p class="text-xs text-slate-500 mb-2 italic">Guru Yang Berucap dan Perkara / Isi Utama Ucapan / Pengumuman:</p>
           <div class="space-y-3">
             <div>
               <label class="block text-xs font-bold text-slate-700">UCAPAN PENGETUA</label>
@@ -263,10 +267,10 @@
           <div class="flex items-center justify-between mb-3">
             <div>
               <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg inline-block">3. GURU TIDAK HADIR</h3>
-              <span class="text-xs text-slate-500 ml-2">Pilih nama guru dan sebab</span>
+              <span class="text-xs text-slate-500 ml-2">Pilih nama guru dan sebab tidak hadir</span>
             </div>
             <button type="button" onclick="addAbsentTeacherRow()" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md hover:bg-emerald-200">
-              <i class="fa-solid fa-plus mr-1"></i> Tambah
+              <i class="fa-solid fa-plus mr-1"></i> Tambah Guru Tidak Hadir
             </button>
           </div>
           <div class="overflow-x-auto">
@@ -274,7 +278,7 @@
               <thead class="bg-slate-100 uppercase font-bold text-slate-700">
                 <tr>
                   <th class="p-2 w-12 text-center">BIL</th>
-                  <th class="p-2">NAMA GURU</th>
+                  <th class="p-2">NAMA GURU (PILIH DROPDOWN)</th>
                   <th class="p-2">SEBAB TIDAK HADIR</th>
                   <th class="p-2 w-10 text-center">PADAM</th>
                 </tr>
@@ -284,15 +288,15 @@
           </div>
         </div>
 
-        <!-- 4. PEMANTAUAN -->
+        <!-- 4. PEMANTAUAN KEBERSIHAN & KECERIAAN -->
         <div>
-          <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-1">4. PEMANTAUAN KEBERSIHAN & KECERIAAN</h3>
+          <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-1">4. PEMANTAUAN (SILA TANDA √ DI KOTAK YANG DISEDIAKAN)</h3>
           <p class="text-[11px] text-slate-500 mb-3">Skala: 1. Tidak memuaskan | 2. Kurang memuaskan | 3. Baik | 4. Sangat baik</p>
           <div class="overflow-x-auto">
             <table class="w-full text-xs border border-slate-200 rounded-lg text-center">
               <thead class="bg-slate-100 uppercase font-bold text-slate-700">
                 <tr>
-                  <th class="p-2 text-left">BIDANG</th>
+                  <th class="p-2 text-left">BIDANG KEBERSIHAN / KECERIAAN</th>
                   <th class="p-2 w-12">1</th>
                   <th class="p-2 w-12">2</th>
                   <th class="p-2 w-12">3</th>
@@ -311,51 +315,69 @@
             <h3 class="text-sm font-bold bg-slate-700 text-white px-3 py-1.5 rounded-lg">5. HAL EHWAL MURID / DISIPLIN</h3>
             <div>
               <div class="flex items-center justify-between">
-                <label class="block text-xs font-bold text-slate-600">A. Bilangan Hadir Lewat:</label>
-                <span id="lewatSyncBadge" class="text-[10px] font-semibold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-300">
+                <label class="block text-xs font-bold text-slate-600">A. Bilangan Murid Hadir Lewat:</label>
+                <span id="lewatSyncBadge" class="text-[10px] font-semibold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
                   <i class="fa-solid fa-arrows-rotate text-[9px]"></i> Semekar Sync
                 </span>
               </div>
               <div class="flex items-center gap-2 mt-1">
                 <input type="number" id="muridLewat" min="0" value="0" class="w-24 px-3 py-1.5 border rounded-lg text-sm font-bold text-slate-800 bg-white">
                 <span class="text-xs font-semibold text-slate-500">Orang Murid</span>
-                <button type="button" onclick="autoFetchMuridLewat(document.getElementById('formTarikh').value, true)" class="p-1.5 text-slate-500 hover:text-emerald-600 rounded text-xs">
+                <button type="button" onclick="autoFetchMuridLewat(document.getElementById('formTarikh').value, true)" title="Segerakkan dari API" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-slate-200 rounded-lg text-xs transition">
                   <i class="fa-solid fa-rotate"></i>
                 </button>
               </div>
             </div>
+
             <div>
-              <label class="block text-xs font-bold text-slate-600">B. Bilangan ke Klinik / Hospital / Pulang Awal:</label>
+              <label class="block text-xs font-bold text-slate-600">B. Bilangan Murid ke Hospital / Klinik / Pulang Awal:</label>
               <div class="flex items-center gap-2 mt-1">
                 <input type="number" id="muridKlinik" min="0" value="0" class="w-24 px-3 py-1.5 border rounded-lg text-sm bg-white">
                 <span class="text-xs font-semibold text-slate-500">Orang Murid</span>
               </div>
             </div>
+
             <div>
-              <label class="block text-xs font-bold text-slate-600">C. Tahap Disiplin Keseluruhan:</label>
+              <label class="block text-xs font-bold text-slate-600">C. Tahap Disiplin Murid Keseluruhan:</label>
               <div class="grid grid-cols-2 gap-2 mt-2">
-                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer"><input type="radio" name="tahapDisiplin" value="Cemerlang" class="mr-2 text-emerald-600"> Cemerlang</label>
-                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer"><input type="radio" name="tahapDisiplin" value="Baik" checked class="mr-2 text-emerald-600"> Baik</label>
-                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer"><input type="radio" name="tahapDisiplin" value="Memuaskan" class="mr-2 text-emerald-600"> Memuaskan</label>
-                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer"><input type="radio" name="tahapDisiplin" value="Lemah" class="mr-2 text-emerald-600"> Lemah</label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapDisiplin" value="Cemerlang" class="mr-2 text-emerald-600"> Cemerlang
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapDisiplin" value="Baik" checked class="mr-2 text-emerald-600"> Baik
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapDisiplin" value="Memuaskan" class="mr-2 text-emerald-600"> Memuaskan
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapDisiplin" value="Lemah" class="mr-2 text-emerald-600"> Lemah
+                </label>
               </div>
             </div>
           </div>
 
           <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
-            <h3 class="text-sm font-bold bg-slate-700 text-white px-3 py-1.5 rounded-lg">6. TAHAP KESELAMATAN</h3>
+            <h3 class="text-sm font-bold bg-slate-700 text-white px-3 py-1.5 rounded-lg">6. TAHAP KESELAMATAN SEKOLAH</h3>
             <div>
               <label class="block text-xs font-bold text-slate-600">A. Tahap Keselamatan Keseluruhan:</label>
               <div class="grid grid-cols-2 gap-2 mt-2">
-                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer"><input type="radio" name="tahapKeselamatan" value="Cemerlang" class="mr-2 text-emerald-600"> Cemerlang</label>
-                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer"><input type="radio" name="tahapKeselamatan" value="Baik" checked class="mr-2 text-emerald-600"> Baik</label>
-                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer"><input type="radio" name="tahapKeselamatan" value="Memuaskan" class="mr-2 text-emerald-600"> Memuaskan</label>
-                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer"><input type="radio" name="tahapKeselamatan" value="Lemah" class="mr-2 text-emerald-600"> Lemah</label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapKeselamatan" value="Cemerlang" class="mr-2 text-emerald-600"> Cemerlang
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapKeselamatan" value="Baik" checked class="mr-2 text-emerald-600"> Baik
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapKeselamatan" value="Memuaskan" class="mr-2 text-emerald-600"> Memuaskan
+                </label>
+                <label class="flex items-center text-xs p-2 bg-white rounded border cursor-pointer hover:bg-slate-100">
+                  <input type="radio" name="tahapKeselamatan" value="Lemah" class="mr-2 text-emerald-600"> Lemah
+                </label>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-600">B. Catatan Isu Keselamatan:</label>
-              <textarea id="catatanKeselamatan" rows="3" placeholder="Sila nyatakan jika ada..." class="w-full mt-1 p-2 border rounded-lg text-sm bg-white"></textarea>
+              <label class="block text-xs font-bold text-slate-600">B. Catatan Kemalangan / Isu Keselamatan:</label>
+              <textarea id="catatanKeselamatan" rows="3" placeholder="Sila nyatakan punca atau insiden jika ada..." class="w-full mt-1 p-2 border rounded-lg text-sm bg-white"></textarea>
             </div>
           </div>
         </div>
@@ -363,14 +385,16 @@
         <!-- 7. PELAWAT -->
         <div>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg">7. PELAWAT</h3>
-            <button type="button" onclick="addVisitorRow()" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md hover:bg-emerald-200">+ Tambah</button>
+            <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg">7. PELAWAT (RUJUK BUKU PELAWAT)</h3>
+            <button type="button" onclick="addVisitorRow()" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md hover:bg-emerald-200">
+              <i class="fa-solid fa-plus mr-1"></i> Tambah Pelawat
+            </button>
           </div>
           <table class="w-full text-xs text-left border border-slate-200 rounded-lg">
             <thead class="bg-slate-100 uppercase font-bold text-slate-700">
               <tr>
                 <th class="p-2 w-12 text-center">BIL</th>
-                <th class="p-2">NAMA PELAWAT</th>
+                <th class="p-2">NAMA PELAWAT / PEGAWAI</th>
                 <th class="p-2">URUSAN</th>
                 <th class="p-2 w-10 text-center">PADAM</th>
               </tr>
@@ -379,17 +403,19 @@
           </table>
         </div>
 
-        <!-- 8. AKTIVITI -->
+        <!-- 8. AKTIVITI / PROGRAM -->
         <div>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg">8. AKTIVITI / PROGRAM</h3>
-            <button type="button" onclick="addActivityRow()" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md hover:bg-emerald-200">+ Tambah</button>
+            <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg">8. LAPORAN AKTIVITI / PROGRAM / LAWATAN</h3>
+            <button type="button" onclick="addActivityRow()" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-md hover:bg-emerald-200">
+              <i class="fa-solid fa-plus mr-1"></i> Tambah Program
+            </button>
           </div>
           <table class="w-full text-xs text-left border border-slate-200 rounded-lg">
             <thead class="bg-slate-100 uppercase font-bold text-slate-700">
               <tr>
                 <th class="p-2 w-12 text-center">BIL</th>
-                <th class="p-2">AKTIVITI</th>
+                <th class="p-2">AKTIVITI / PROGRAM / LAWATAN</th>
                 <th class="p-2">PENGLIBATAN</th>
                 <th class="p-2 w-10 text-center">PADAM</th>
               </tr>
@@ -401,26 +427,29 @@
         <!-- 9. LAPORAN HARIAN -->
         <div>
           <h3 class="text-sm font-bold bg-slate-800 text-white px-3 py-1.5 rounded-lg mb-2">9. LAPORAN HARIAN</h3>
-          <textarea id="laporanHarian" rows="3" placeholder="Ulasan keseluruhan hari ini..." class="w-full p-3 border rounded-lg text-sm"></textarea>
+          <textarea id="laporanHarian" rows="3" placeholder="Ulasan keseluruhan perjalanan aktiviti sekolah hari ini..." class="w-full p-3 border rounded-lg text-sm"></textarea>
         </div>
 
-        <!-- FOTO SIGNIFIKAN (DIMAMPATKAN SECARA OPTIMUM) -->
+        <!-- FOTO SIGNIFIKAN (DIMAMPATKAN SECARA OPTIMUM ~5-8 KB) -->
         <div class="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-200">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
             <div>
               <h3 class="text-sm font-bold text-emerald-950 flex items-center gap-2">
-                <i class="fa-solid fa-camera text-emerald-600 text-base"></i> FOTO SIGNIFIKAN (MAKSIMUM 4)
+                <i class="fa-solid fa-camera text-emerald-600 text-base"></i> FOTO SIGNIFIKAN (MAKSIMUM 4 GAMBAR)
               </h3>
-              <p class="text-xs text-emerald-700 mt-0.5">Imej dimampatkan secara automatik (~8-12 KB) supaya penghantaran data sepantas kilat.</p>
+              <p class="text-xs text-emerald-700 mt-0.5">
+                Gambar dimampatkan secara automatik (~5-8 KB) untuk menjimatkan masa pemindahan data pangkalan.
+              </p>
             </div>
-            <div class="flex items-center gap-2">
+            
+            <div class="flex items-center gap-2 flex-wrap">
               <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelection(event)">
               <input type="file" id="fileInput" accept="image/*" multiple class="hidden" onchange="handleImageSelection(event)">
 
-              <button type="button" onclick="document.getElementById('cameraInput').click()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-2">
+              <button type="button" onclick="document.getElementById('cameraInput').click()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-2 transition active:scale-95">
                 <i class="fa-solid fa-camera"></i> Kamera
               </button>
-              <button type="button" onclick="document.getElementById('fileInput').click()" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-2">
+              <button type="button" onclick="document.getElementById('fileInput').click()" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-2 transition active:scale-95">
                 <i class="fa-solid fa-images"></i> Galeri
               </button>
             </div>
@@ -428,7 +457,7 @@
 
           <div class="flex items-center justify-between text-xs font-semibold text-slate-500 mb-2">
             <span id="photoCountText">0 daripada 4 gambar dimuat naik</span>
-            <span class="text-[11px] text-emerald-700 font-medium"><i class="fa-solid fa-bolt mr-1"></i>Mod Ringan Aktif</span>
+            <span class="text-[11px] text-emerald-700 font-medium"><i class="fa-solid fa-bolt mr-1"></i>Mod Pantas Aktif</span>
           </div>
 
           <div id="fotoPreviewContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
@@ -438,14 +467,17 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div class="flex justify-between items-center mb-2">
-              <label class="text-xs font-bold text-slate-700">TANDATANGAN GURU PENYEDIA:</label>
-              <button type="button" onclick="clearSignature('canvasGuru')" class="text-xs text-rose-600 hover:underline font-semibold">Padam</button>
+              <label class="text-xs font-bold text-slate-700">TANDATANGAN GURU BERTUGAS (PENYEDIA):</label>
+              <button type="button" onclick="clearSignature('canvasGuru')" class="text-xs text-rose-600 hover:underline font-semibold">
+                <i class="fa-solid fa-eraser mr-1"></i> Padam
+              </button>
             </div>
             <canvas id="canvasGuru" width="380" height="120" class="signature-pad w-full"></canvas>
+            
             <div class="mt-2">
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Guru Penyedia:</label>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Guru Penyedia (Pilih Guru Bertugas):</label>
               <select id="namaGuruTandatangan" class="w-full px-3 py-2 border rounded-lg text-xs font-bold text-slate-800 bg-white">
-                <option value="">-- Pilih Guru Penyedia --</option>
+                <option value="">-- Pilih Guru Penyedia Laporan --</option>
               </select>
             </div>
           </div>
@@ -453,12 +485,14 @@
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div class="flex justify-between items-center mb-2">
               <label class="text-xs font-bold text-slate-700">TANDATANGAN PENTADBIR (PENGESAH):</label>
-              <button type="button" onclick="clearSignature('canvasPentadbir')" class="text-xs text-rose-600 hover:underline font-semibold">Padam</button>
+              <button type="button" onclick="clearSignature('canvasPentadbir')" class="text-xs text-rose-600 hover:underline font-semibold">
+                <i class="fa-solid fa-eraser mr-1"></i> Padam
+              </button>
             </div>
             <canvas id="canvasPentadbir" width="380" height="120" class="signature-pad w-full"></canvas>
             <div class="mt-2">
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Pentadbir:</label>
-              <input type="text" id="namaPentadbirTandatangan" list="listGuruAutocomplete" placeholder="Nama Pengetua / GPK" class="w-full px-3 py-2 border rounded-lg text-xs bg-white font-medium">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Pengetua / Penolong Kanan:</label>
+              <input type="text" id="namaPentadbirTandatangan" list="listGuruAutocomplete" placeholder="Nama Pengetua / Guru Penolong Kanan" class="w-full px-3 py-2 border rounded-lg text-xs bg-white font-medium">
             </div>
           </div>
         </div>
@@ -483,27 +517,31 @@
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <p class="text-xs font-semibold text-slate-500 uppercase">Jumlah Laporan</p>
           <h3 id="statTotalReports" class="text-2xl font-black text-slate-800 mt-1">0</h3>
+          <span class="text-[11px] text-emerald-600 font-semibold"><i class="fa-solid fa-database mr-1"></i>Tersimpan di Sheet</span>
         </div>
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <p class="text-xs font-semibold text-slate-500 uppercase">Status Pengesahan</p>
           <h3 id="statVerifiedCount" class="text-2xl font-black text-emerald-700 mt-1">0</h3>
+          <span class="text-[11px] text-slate-500 font-medium">Telah Disahkan</span>
         </div>
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <p class="text-xs font-semibold text-slate-500 uppercase">Purata Murid Lewat</p>
           <h3 id="statAvgLate" class="text-2xl font-black text-amber-600 mt-1">0</h3>
+          <span class="text-[11px] text-slate-500 font-medium">Orang Setiap Hari</span>
         </div>
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <p class="text-xs font-semibold text-slate-500 uppercase">Jumlah Guru</p>
+          <p class="text-xs font-semibold text-slate-500 uppercase">Jumlah Guru Berdaftar</p>
           <h3 id="statTotalTeachers" class="text-2xl font-black text-teal-700 mt-1">26</h3>
+          <span class="text-[11px] text-teal-600 font-medium">Pangkalan Data Sheet</span>
         </div>
       </div>
 
       <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
         <div class="relative w-full md:w-80">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
-          <input type="text" id="dashboardSearchInput" oninput="renderDashboardTable()" placeholder="Cari No Rujukan, tarikh, guru..." class="w-full pl-9 pr-3 py-2 border rounded-xl text-sm">
+          <input type="text" id="dashboardSearchInput" oninput="renderDashboardTable()" placeholder="Cari Rujukan, tarikh, guru..." class="w-full pl-9 pr-3 py-2 border rounded-xl text-sm">
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 w-full md:w-auto justify-end">
           <button type="button" onclick="fetchReportsFromSheet(true)" class="px-4 py-2 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl hover:bg-emerald-200 flex items-center gap-1.5">
             <i class="fa-solid fa-rotate"></i> Muat Semula
           </button>
@@ -515,7 +553,7 @@
 
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-4 border-b font-bold text-slate-800 flex justify-between items-center">
-          <span>Senarai Rekod Laporan Bertugas</span>
+          <span>Senarai Rekod Laporan Guru Bertugas</span>
           <span id="recordCountBadge" class="text-xs bg-slate-100 px-2.5 py-1 rounded-full text-slate-600">0 Rekod</span>
         </div>
         <div class="overflow-x-auto">
@@ -524,7 +562,7 @@
               <tr>
                 <th class="p-3">No. Rujukan / Tarikh</th>
                 <th class="p-3">Minggu</th>
-                <th class="p-3">Penyedia</th>
+                <th class="p-3">Pengisi / Guru Bertugas</th>
                 <th class="p-3 text-center">Status</th>
                 <th class="p-3">Masa Kemaskini (Malaysia)</th>
                 <th class="p-3 text-center">Tindakan</th>
@@ -540,7 +578,7 @@
     <div id="page-cetakan" class="hidden space-y-6">
       <div class="no-print bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-3">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold text-slate-600">Pilih Rekod:</span>
+          <span class="text-xs font-bold text-slate-600">Pilih Laporan:</span>
           <select id="printReportSelect" onchange="loadReportForPrint(this.value)" class="text-xs border rounded-lg px-3 py-1.5 font-semibold text-slate-800">
           </select>
         </div>
@@ -549,7 +587,7 @@
             <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
           </button>
           <button type="button" onclick="editLoadedPrintReport()" class="px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 shadow flex items-center gap-2">
-            <i class="fa-solid fa-pen"></i> Kemaskini
+            <i class="fa-solid fa-pen"></i> Kemaskini Laporan Ini
           </button>
           <button type="button" onclick="copyPrintUrl()" class="px-3 py-2 border rounded-xl text-xs font-semibold hover:bg-slate-50 text-slate-700">
             <i class="fa-solid fa-share-nodes"></i> Salin URL
@@ -560,7 +598,7 @@
       <!-- DOKUMEN CETAKAN RASMI -->
       <div id="printableDocument" class="print-container bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-slate-200 text-black leading-tight text-xs">
         <div class="border-2 border-black p-3 mb-4 flex items-center justify-between gap-3">
-          <img src="logo.png" alt="Logo" class="h-14 w-14 object-contain flex-shrink-0" onerror="this.style.display='none'">
+          <img src="logo.png" alt="Logo Sekolah" class="h-14 w-14 object-contain flex-shrink-0" onerror="this.style.display='none'">
           <div class="text-center flex-grow">
             <h2 class="text-base font-black uppercase tracking-wider">LAPORAN GURU BERTUGAS</h2>
             <div class="text-[10px] font-bold tracking-widest uppercase text-gray-700">Buku Rekod & Pengurusan Harian Sekolah</div>
@@ -575,6 +613,7 @@
           <div>KEHADIRAN GURU : <span id="p_kehadiran" class="font-normal"></span></div>
         </div>
 
+        <!-- 1. GURU BERTUGAS -->
         <div class="mb-4">
           <div class="font-bold mb-1">1. GURU BERTUGAS :</div>
           <table class="w-full border-collapse border border-black text-[11px]">
@@ -593,8 +632,10 @@
           </table>
         </div>
 
+        <!-- 2. PERHIMPUNAN / AKTIVITI PAGI -->
         <div class="mb-4">
           <div class="font-bold mb-1">2. PERHIMPUNAN / AKTIVITI PAGI :</div>
+          <div class="text-[10px] italic mb-1">Guru Yang Berucap dan Perkara / Isi Utama Ucapan / Pengumuman :</div>
           <table class="w-full border-collapse border border-black text-[10px]">
             <tr>
               <td class="border border-black p-1.5 font-bold w-1/4 align-top">UCAPAN PENGETUA</td>
@@ -619,6 +660,7 @@
           </div>
         </div>
 
+        <!-- 3. GURU TIDAK HADIR -->
         <div class="mb-4">
           <div class="font-bold mb-1">3. GURU TIDAK HADIR :</div>
           <table class="w-full border-collapse border border-black text-[10px]">
@@ -636,12 +678,13 @@
           </table>
         </div>
 
+        <!-- 4. PEMANTAUAN KEBERSIHAN -->
         <div class="mb-4">
-          <div class="font-bold mb-1">4. PEMANTAUAN (SKALA: 1-4) :</div>
+          <div class="font-bold mb-1">4. PEMANTAUAN (SILA TANDA √ DI KOTAK YANG DISEDIAKAN) :</div>
           <table class="w-full border-collapse border border-black text-[10px] text-center">
             <thead>
               <tr class="font-bold bg-gray-100">
-                <td class="border border-black p-1 text-left">BIDANG</td>
+                <td class="border border-black p-1 text-left">BIDANG KEBERSIHAN / KECERIAAN</td>
                 <td class="border border-black p-1 w-10">1</td>
                 <td class="border border-black p-1 w-10">2</td>
                 <td class="border border-black p-1 w-10">3</td>
@@ -651,10 +694,12 @@
             </thead>
             <tbody id="p_tbodyMonitoring"></tbody>
           </table>
+          <div class="text-[9px] mt-1 italic text-right">**1. Tidak memuaskan | 2. Kurang memuaskan | 3. Baik | 4. Sangat baik</div>
         </div>
 
         <div class="page-break my-6 border-t border-dashed border-gray-300 no-print"></div>
 
+        <!-- 5. HEM / DISIPLIN -->
         <div class="mb-4">
           <div class="font-bold mb-1">5. HAL EHWAL MURID / DISIPLIN :</div>
           <table class="w-full border-collapse border border-black text-[10px]">
@@ -663,39 +708,41 @@
               <td class="border border-black p-1.5 font-bold"><span id="p_muridLewat">0</span> MURID</td>
             </tr>
             <tr>
-              <td class="border border-black p-1.5">B. BIL MURID KE KLINIK / HOSPITAL / PULANG AWAL :</td>
+              <td class="border border-black p-1.5">B. BIL MURID KE KLINIK / HOSPITAL / PULANG AWAL PADA HARI INI :</td>
               <td class="border border-black p-1.5 font-bold"><span id="p_muridKlinik">0</span> MURID</td>
             </tr>
             <tr>
-              <td class="border border-black p-1.5">C. TAHAP DISIPLIN KESELURUHAN :</td>
+              <td class="border border-black p-1.5">C. TAHAP DISIPLIN MURID KESELURUHAN :</td>
               <td class="border border-black p-1.5"><div class="flex gap-4 font-bold" id="p_disiplinChecks"></div></td>
             </tr>
           </table>
         </div>
 
+        <!-- 6. TAHAP KESELAMATAN -->
         <div class="mb-4">
-          <div class="font-bold mb-1">6. TAHAP KESELAMATAN :</div>
+          <div class="font-bold mb-1">6. TAHAP KESELAMATAN SEKOLAH :</div>
           <table class="w-full border-collapse border border-black text-[10px]">
             <tr>
-              <td class="border border-black p-1.5 w-2/3">A. TAHAP KESELAMATAN KESELURUHAN :</td>
+              <td class="border border-black p-1.5 w-2/3">A. TAHAP KESELAMATAN SEKOLAH KESELURUHAN :</td>
               <td class="border border-black p-1.5"><div class="flex gap-4 font-bold" id="p_keselamatanChecks"></div></td>
             </tr>
             <tr>
               <td colspan="2" class="border border-black p-1.5">
-                <div class="font-semibold text-[9px] mb-1">B. Catatan Isu / Kemalangan :</div>
+                <div class="font-semibold text-[9px] mb-1">B. Catatan Kemalangan / Isu Keselamatan :</div>
                 <div id="p_catatanKeselamatan" class="min-h-[20px] whitespace-pre-line italic">Tiada sebarang insiden dilaporkan.</div>
               </td>
             </tr>
           </table>
         </div>
 
+        <!-- 7. PELAWAT -->
         <div class="mb-4">
-          <div class="font-bold mb-1">7. PELAWAT :</div>
+          <div class="font-bold mb-1">7. PELAWAT SILA NYATAKAN (RUJUK BUKU PELAWAT) :</div>
           <table class="w-full border-collapse border border-black text-[10px]">
             <thead>
               <tr class="bg-gray-100 font-bold">
                 <td class="border border-black p-1 text-center w-8">BIL</td>
-                <td class="border border-black p-1">NAMA PELAWAT</td>
+                <td class="border border-black p-1">NAMA PELAWAT / PEGAWAI</td>
                 <td class="border border-black p-1">URUSAN</td>
               </tr>
             </thead>
@@ -703,13 +750,14 @@
           </table>
         </div>
 
+        <!-- 8. AKTIVITI / PROGRAM -->
         <div class="mb-4">
-          <div class="font-bold mb-1">8. AKTIVITI / PROGRAM :</div>
+          <div class="font-bold mb-1">8. LAPORAN AKTIVITI / PROGRAM / LAWATAN :</div>
           <table class="w-full border-collapse border border-black text-[10px]">
             <thead>
               <tr class="bg-gray-100 font-bold">
                 <td class="border border-black p-1 text-center w-8">BIL</td>
-                <td class="border border-black p-1">AKTIVITI</td>
+                <td class="border border-black p-1">AKTIVITI / PROGRAM / LAWATAN</td>
                 <td class="border border-black p-1">PENGLIBATAN</td>
               </tr>
             </thead>
@@ -717,29 +765,32 @@
           </table>
         </div>
 
+        <!-- 9. LAPORAN HARIAN -->
         <div class="mb-4">
           <div class="font-bold mb-1">9. LAPORAN HARIAN :</div>
           <div id="p_laporanHarian" class="border border-black p-2 min-h-[35px] whitespace-pre-line text-[10px]"></div>
         </div>
 
+        <!-- FOTO SIGNIFIKAN DALAM CETAKAN -->
         <div class="mb-4" id="p_fotoSection">
           <div class="font-bold mb-1">FOTO SIGNIFIKAN :</div>
           <div id="p_fotoGrid" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
         </div>
 
+        <!-- TANDATANGAN PENGISI & PENGESAH -->
         <div class="mt-8 pt-4 grid grid-cols-2 gap-8 text-[11px]">
           <div>
             <div class="font-bold mb-1">Disediakan oleh,</div>
             <div class="h-20 flex items-center justify-start border-b border-black">
-              <img id="p_imgTtGuru" class="max-h-20 max-w-full object-contain hidden" alt="TT Guru">
+              <img id="p_imgTtGuru" class="max-h-20 max-w-full object-contain hidden" alt="Tandatangan Pengisi">
             </div>
             <div class="mt-1">( <span id="p_namaGuruText" class="font-semibold">......................................................</span> )</div>
-            <div class="text-[10px] text-gray-600">Guru Bertugas</div>
+            <div class="text-[10px] text-gray-600">Nama / Tandatangan Guru Bertugas</div>
           </div>
           <div>
             <div class="font-bold mb-1">Disemak oleh,</div>
             <div class="h-20 flex items-center justify-start border-b border-black">
-              <img id="p_imgTtPentadbir" class="max-h-20 max-w-full object-contain hidden" alt="TT Pentadbir">
+              <img id="p_imgTtPentadbir" class="max-h-20 max-w-full object-contain hidden" alt="Tandatangan Pentadbir">
             </div>
             <div class="mt-1">( <span id="p_namaPentadbirText" class="font-semibold">......................................................</span> )</div>
             <div class="text-[10px] text-gray-600">Pengetua / Guru Penolong Kanan</div>
@@ -750,20 +801,20 @@
 
   </div>
 
-  <!-- MODAL ADMIN -->
+  <!-- ================= MODAL ADMIN ================= -->
   <div id="adminModal" class="no-print fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
     <div id="adminModalBox" class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-200">
       <div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center">
         <h3 class="font-bold text-sm flex items-center gap-2">
-          <i class="fa-solid fa-user-shield text-amber-400"></i> Pengurusan Guru (Admin)
+          <i class="fa-solid fa-user-shield text-amber-400"></i> Pengurusan Senarai Guru (Admin)
         </h3>
         <button type="button" onclick="closeAdminModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
       <div id="adminLoginSection" class="p-6 space-y-4">
-        <p class="text-xs text-slate-600">Masukkan kata laluan admin untuk mengurus senarai guru.</p>
+        <p class="text-xs text-slate-600">Sila masukkan kata laluan admin yang disimpan di Google Sheet.</p>
         <div>
-          <input type="password" id="adminPasswordInput" placeholder="Kata laluan admin..." onkeydown="if(event.key==='Enter') verifyAdminPassword()" class="w-full px-3.5 py-2.5 border rounded-xl text-sm">
+          <input type="password" id="adminPasswordInput" placeholder="Masukkan kata laluan..." onkeydown="if(event.key==='Enter') verifyAdminPassword()" class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
         </div>
         <div id="adminFeedbackBox" class="hidden px-3.5 py-2 rounded-xl text-xs font-semibold"></div>
         <div class="flex justify-end gap-2 pt-2 border-t">
@@ -774,7 +825,7 @@
 
       <div id="adminManageSection" class="hidden p-6 space-y-4">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">Senarai Guru:</span>
+          <span class="text-xs font-bold text-slate-700">Senarai Guru Aktif:</span>
           <span id="adminTeacherCountBadge" class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">0 Guru</span>
         </div>
         <div class="flex gap-2">
@@ -790,6 +841,7 @@
     </div>
   </div>
 
+  <!-- ================= JAVASCRIPT APLIKASI ================= -->
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYvyphCIscCZR9p2on3ukNTyITiRj4DLLJp3sAFc72nKcpAXQRWU23RzR2Rs72Q7krZA/exec";
 
@@ -853,6 +905,18 @@
       initMonitoringTable();
       initDefaultTables();
       initSignaturePads();
+
+      // MUAT REKOD DARI LOCALSTORAGE UNTUK KEPANTASAN SERTA-MERTA
+      try {
+        const localCached = localStorage.getItem("semekar_reports_cache");
+        if (localCached) {
+          allReports = JSON.parse(localCached);
+          updateDashboardStats();
+          renderDashboardTable();
+          populatePrintSelect();
+        }
+      } catch (e) {}
+
       updateTeacherDatalist();
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -865,6 +929,7 @@
       document.getElementById("formTarikh").value = today;
       autoFillDay(today);
 
+      // SINKRONISASI LATAR BELAKANG BERSAMA GOOGLE SHEETS
       fetchReportsFromSheet().then(() => {
         if (id) {
           if (page === "pelaporan") loadReportForEdit(id);
@@ -898,21 +963,18 @@
       if (pageId === "dashboard") renderDashboardTable();
     }
 
-    // TUKAR FORMAT TARIKH KE MALAYSIA (DD/MM/YYYY)
     function formatDateToMalaysia(dateString) {
       if (!dateString) return "-";
-      if (dateString.includes("/")) return dateString; // Sudah dalam format DD/MM/YYYY
+      if (dateString.includes("/")) return dateString;
       const parts = dateString.split("-");
       if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
       return dateString;
     }
 
-    // DIALOG PEMPROSESAN (MODAL LOADING)
     function showProcessModal(title, desc) {
       const modal = document.getElementById("processModal");
-      document.getElementById("processModalTitle").textContent = title || "Menyimpan Laporan...";
-      document.getElementById("processModalDesc").textContent = desc || "Sila tunggu sebentar sementara rekod dihantar ke Google Sheets.";
-      document.getElementById("processIconContainer").innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      document.getElementById("processModalTitle").textContent = title || "Memproses...";
+      document.getElementById("processModalDesc").textContent = desc || "Sila tunggu sebentar...";
       modal.classList.remove("hidden");
     }
 
@@ -941,7 +1003,7 @@
       const select = document.getElementById("namaGuruTandatangan");
       if (!select) return;
       const currentVal = preferredSelection || select.value;
-      select.innerHTML = '<option value="">-- Pilih Guru Penyedia --</option>';
+      select.innerHTML = '<option value="">-- Pilih Guru Penyedia Laporan --</option>';
 
       const dutyTeachers = [];
       for (let i = 1; i <= 6; i++) {
@@ -1159,7 +1221,7 @@
       tbody.appendChild(tr);
     }
 
-    // MAMPATAN IMEJ ULTRA-RINGAN (~8-12 KB)
+    // MAMPATAN IMEJ ULTRA CEPAT & RINGAN (MAKS 400px / 0.40)
     async function handleImageSelection(e) {
       const files = Array.from(e.target.files);
       if (!files.length) return;
@@ -1169,17 +1231,16 @@
         return;
       }
 
-      showToast("Memampatkan imej...", "info");
       for (const file of files) {
         if (compressedPhotos.length >= 4) break;
-        const base64 = await compressImageFile(file, 480, 0.45);
+        const base64 = await compressImageFile(file, 400, 0.40);
         compressedPhotos.push(base64);
       }
       renderPhotoPreviews();
       e.target.value = "";
     }
 
-    function compressImageFile(file, maxDimension = 480, quality = 0.45) {
+    function compressImageFile(file, maxDimension = 400, quality = 0.40) {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -1285,8 +1346,8 @@
       const isUpdate = !!currentEditReportId;
 
       showProcessModal(
-        isUpdate ? "Mengemaskini Laporan..." : "Menyimpan Laporan Baharu...",
-        "Data sedang diproses dan dihantar ke pengkalan data Google Sheets."
+        isUpdate ? "Mengemaskini Laporan..." : "Menyimpan Laporan...",
+        "Menghantar data ke Google Sheets..."
       );
 
       const absentTeachers = [];
@@ -1373,7 +1434,7 @@
           showUpdateBar(result.id, nowStr);
           document.getElementById("alreadyFilledAlert").classList.add("hidden");
 
-          // Kemas kini rekod tempatan tanpa membebankan pelayan dengan request getAll
+          // KEMASKINI CACHE TEMPATAN SERTA-MERTA
           const localRecord = {
             ID: result.id,
             Minggu: reportPayload.Minggu,
@@ -1391,20 +1452,23 @@
           if (existIdx !== -1) allReports[existIdx] = { ...allReports[existIdx], ...localRecord };
           else allReports.unshift(localRecord);
 
+          try {
+            localStorage.setItem("semekar_reports_cache", JSON.stringify(allReports));
+          } catch(e) {}
+
           updateDashboardStats();
           populatePrintSelect();
 
           hideProcessModal();
-          showToast(isUpdate ? "Laporan berjaya dikemaskini!" : `Berjaya disimpan! No Rujukan: ${result.id}`, "success");
+          showToast(isUpdate ? "Laporan berjaya dikemaskini!" : `Berjaya disimpan! ID: ${result.id}`, "success");
           history.pushState(null, "", `?page=pelaporan&id=${result.id}`);
         } else {
           hideProcessModal();
           showToast("Ralat: " + result.message, "error");
         }
       } catch (err) {
-        console.error(err);
         hideProcessModal();
-        showToast("Ralat sambungan. Data mungkin telah disimpan di Sheet, sila semak Dashboard.", "error");
+        showToast("Ralat sambungan dengan pelayan.", "error");
       }
     }
 
@@ -1439,16 +1503,20 @@
       autoFetchMuridLewat(today, false);
 
       history.pushState(null, "", "?page=pelaporan");
-      showToast("Borang diset semula untuk laporan baharu.", "info");
+      showToast("Borang diset semula.", "info");
     }
 
     async function fetchReportsFromSheet(showFeedback = false) {
-      if (showFeedback) showToast("Menyegerakkan data dari Google Sheets...", "info");
+      if (showFeedback) showToast("Menyegerakkan rekod terkini...", "info");
       try {
         const res = await fetch(`${APPS_SCRIPT_URL}?action=getAll`);
         const json = await res.json();
         if (json.status === "success") {
           allReports = json.data;
+          try {
+            localStorage.setItem("semekar_reports_cache", JSON.stringify(allReports));
+          } catch(e) {}
+
           if (json.teachers && Array.isArray(json.teachers)) {
             currentTeachersList = json.teachers;
             updateTeacherDatalist();
@@ -1457,10 +1525,10 @@
           updateDashboardStats();
           renderDashboardTable();
           populatePrintSelect();
-          if (showFeedback) showToast("Data terkini berjaya dimuat turun!", "success");
+          if (showFeedback) showToast("Data berjaya disegerakkan!", "success");
         }
       } catch (e) {
-        console.warn("Gagal muat turun data:", e);
+        console.warn("Gagal fetch data:", e);
       }
     }
 
@@ -1529,7 +1597,7 @@
     }
 
     async function loadReportForEdit(id) {
-      showProcessModal("Memuatkan Laporan...", "Mengambil rekod penuh daripada Google Sheets.");
+      showProcessModal("Memuatkan Rekod...", "Mengambil data penuh...");
       try {
         const res = await fetch(`${APPS_SCRIPT_URL}?id=${id}`);
         const json = await res.json();
@@ -1615,7 +1683,7 @@
         showToast("Laporan sedia dikemaskini.", "success");
       } catch (err) {
         hideProcessModal();
-        showToast("Gagal memuatkan rekod: " + err.message, "error");
+        showToast("Ralat memuatkan rekod: " + err.message, "error");
       }
     }
 
@@ -1763,7 +1831,7 @@
         document.getElementById("p_namaPentadbirText").textContent = d.Nama_Pentadbir || d.GKMP || "Pengetua / GPK";
 
       } catch (err) {
-        showToast("Ralat memaparkan cetakan: " + err.message, "error");
+        showToast("Ralat cetakan: " + err.message, "error");
       }
     }
 
@@ -1791,7 +1859,7 @@
         type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800'
       }`;
       t.classList.remove("hidden");
-      setTimeout(() => t.classList.add("hidden"), 3500);
+      setTimeout(() => t.classList.add("hidden"), 3000);
     }
 
     // MODAL ADMIN
